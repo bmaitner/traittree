@@ -9,7 +9,6 @@
 #' Write example text
 #' }
 #' @export
-#' @import geiger
 scale_branches_by_traits_fastAnc<-function(tree,traits,percent=FALSE){
   
   #Need to have matching species in the phylogeny and the trait data

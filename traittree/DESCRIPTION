@@ -10,5 +10,6 @@ LazyData: true
 Imports: 
     raster,
     ape,
-    Rphylopars
+    Rphylopars,
+    geiger
 RoxygenNote: 6.0.1

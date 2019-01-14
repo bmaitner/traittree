@@ -2,7 +2,6 @@
 #'
 #'richness_raster
 #' @param occurrences A set of occurrences in "tidy" format: first column is species name, second is raster cells where the species occurs.
-#' @param traits a set of trait data where the first column is species name and additional columns are trait data
 #' @param template.raster The raster that corresponds to the cell numbers in the second column of the occurrences file
 #' @return List containing 4 rasters and 3 phylogenies (original, trait-scaled and rate-scaled)
 #' @examples \dontrun{
