@@ -1,0 +1,14 @@
+Package: traittree
+Title: Functions for scaling phylogeny by phenotypic traits
+Version: 0.0.0.9000
+Authors@R: person("Brian", "Maitner", email = "bmaitner@gmail.com", role = c("aut", "cre"))
+Description: This package provides a few tools allowing the user to re-scale phylogenies from units of time to units of morphological change.
+Depends: R (>= 3.5.0)
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports: 
+    raster,
+    ape,
+    Rphylopars
+RoxygenNote: 6.0.1
