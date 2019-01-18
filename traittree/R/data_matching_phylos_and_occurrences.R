@@ -19,7 +19,7 @@ data_matching<-function(phylogeny,occurrences){
   rm(occurrences_pruned)
   
   #remove species from phylogeny that aren't needed
-  species_to_prune<-setdiff(x = phylo_species,y = occurrences)
+  species_to_prune<-setdiff(x = phylo_species,y = unique(occurrences[,1]))
   phylogeny_pruned<-ape::drop.tip(phylogeny,species_to_prune)
   rm(species_to_prune)
   phylogeny<-phylogeny_pruned
