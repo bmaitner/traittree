@@ -8,6 +8,7 @@
 #' Write example text
 #' }
 #' @export
+#' @importFrom  "ape" "drop.tip"
 data_matching<-function(phylogeny,occurrences){
   #removing occurrences that aren't in the phylogeny
   phylo_species<-phylogeny$tip.label
@@ -18,8 +19,8 @@ data_matching<-function(phylogeny,occurrences){
   rm(occurrences_pruned)
   
   #remove species from phylogeny that aren't needed
-  species_to_prune<-phylo_species[which(phylo_species%nin%occurrences[,1])]
-  phylogeny_pruned<-drop.tip(phylogeny,species_to_prune)
+  species_to_prune<-setdiff(x = phylo_species,y = occurrences)
+  phylogeny_pruned<-ape::drop.tip(phylogeny,species_to_prune)
   rm(species_to_prune)
   phylogeny<-phylogeny_pruned
   rm(phylogeny_pruned)

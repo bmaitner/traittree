@@ -13,6 +13,8 @@
 #' Write example text
 #' }
 #' @export
+#' @import Rphylopars
+#' @importFrom "stats" "dist"
 scale_branches_multidimensional<-function(tree,traits,rate=F){
   
   

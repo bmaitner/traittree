@@ -9,16 +9,22 @@
 #' Write example text
 #' }
 #' @export
+#' @importFrom  "ape" "drop.tip"
+#' @import phytools
 scale_branches_by_traits_fastAnc<-function(tree,traits,percent=FALSE){
   
   #Need to have matching species in the phylogeny and the trait data
-  sp_to_remove<-tree$tip.label[which(tree$tip.label%nin%names(traits))]
-  tree<-drop.tip(tree,sp_to_remove)#
+  #sp_to_remove<-tree$tip.label[which(tree$tip.label%nin%names(traits))]
+  
+  sp_to_remove <- setdiff(tree$tip.label,names(traits))
+  
+  
+  tree<-ape::drop.tip(tree,sp_to_remove)#
   traits<-traits[tree$tip.label]
   
   
   #Next, estimate ancestral states and character states
-  fast_anc_output<-fastAnc(tree = tree,x = traits)#seems to work well and reasonably fast (seconds for 4351 spp)
+  fast_anc_output<-phytools::fastAnc(tree = tree,x = traits)#seems to work well and reasonably fast (seconds for 4351 spp)
   
   #fastAnc does not include extant species, these must be appended to the output
   tip_labels<-as.data.frame(cbind(1:length(tree$tip.label),tree$tip.label))

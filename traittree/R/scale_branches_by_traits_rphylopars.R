@@ -10,6 +10,7 @@
 #' Write example text
 #' }
 #' @export
+#' @import Rphylopars
 scale_branches_by_traits_rphylopars<-function(tree,traits,percent=FALSE){
 
 message("this function should be combined with the other 'scale_branches_rphylopars' functions to eliminate redundancy")  

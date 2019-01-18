@@ -10,6 +10,8 @@
 #' Write example text
 #' }
 #' @export
+#' @import raster
+#' @import PhyloMeasures
 calculate_pd_metric_rasters<-function(occurrences,phylogeny,traits,template.raster){
 
   #1) create trait-scaled phylogeny  
@@ -54,10 +56,10 @@ calculate_pd_metric_rasters<-function(occurrences,phylogeny,traits,template.rast
   colnames(matrix_i)<-time_phylo$tip.label
   matrix_i[which(colnames(matrix_i)%in%spp_to_include)]<-1
    
-  pd_time<-c(pd_time,pd.query(tree = time_phylo,matrix = matrix_i,standardize = F))  
-  pdi_time<-c(pdi_time,pd.query(tree = time_phylo,matrix = matrix_i,standardize = T) ) 
-  pd_traits<-c(pd_traits,pd.query(tree = trait_phylo,matrix = matrix_i,standardize = F))  
-  pdi_traits<-c(pdi_traits,pd.query(tree = trait_phylo,matrix = matrix_i,standardize = T)) 
+  pd_time<-c(pd_time,PhyloMeasures::pd.query(tree = time_phylo,matrix = matrix_i,standardize = F))  
+  pdi_time<-c(pdi_time,PhyloMeasures::pd.query(tree = time_phylo,matrix = matrix_i,standardize = T) ) 
+  pd_traits<-c(pd_traits,PhyloMeasures::pd.query(tree = trait_phylo,matrix = matrix_i,standardize = F))  
+  pdi_traits<-c(pdi_traits,PhyloMeasures::pd.query(tree = trait_phylo,matrix = matrix_i,standardize = T)) 
     
     
   }#else

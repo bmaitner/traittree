@@ -12,6 +12,8 @@
 #' Write example text
 #' }
 #' @export
+#' @import Rphylopars
+#' @importFrom "stats" "dist"
 scale_branches_multidimensional_with_variation<-function(tree,traits,rate=F){
   
   message("Note: currently this function generates one phylogeny at a time, which is dumb.  Brian should modify it to generate a user-supplied number of phylogenies")
@@ -20,8 +22,8 @@ scale_branches_multidimensional_with_variation<-function(tree,traits,rate=F){
   traits<-traits[which(traits$species%in%tree$tip.label),]
   
   #Next, do ancestral state reconstruction on all traits at once using BM with Rphylopars  
-  phylopars_output<-phylopars(trait_data = traits,tree = tree)
-  anc_recon<-phylopars_output$anc_recon
+  phylopars_output <- Rphylopars::phylopars(trait_data = traits,tree = tree)
+  anc_recon<- phylopars_output$anc_recon
   anc_var<-phylopars_output$anc_var
   
   row.names(anc_recon)[1:length(tree$tip.label)]<-1:length(tree$tip.label)
@@ -37,11 +39,11 @@ scale_branches_multidimensional_with_variation<-function(tree,traits,rate=F){
         #value_1<-anc_recon[which(row.names(anc_recon)==node_1),]
         #value_2<-anc_recon[which(row.names(anc_recon)==node_2),]
         
-        value_1<-apply(X = cbind(anc_recon[which(row.names(anc_recon)==node_1),],anc_var[which(row.names(anc_var)==node_1),]),MARGIN = 1,FUN = function(x){rnorm(n = 1,mean = x[1],sd = sqrt(x[2])) })
-        value_2<-apply(X = cbind(anc_recon[which(row.names(anc_recon)==node_2),],anc_var[which(row.names(anc_var)==node_2),]),MARGIN = 1,FUN = function(x){rnorm(n = 1,mean = x[1],sd = sqrt(x[2])) })
+        value_1<-apply(X = cbind(anc_recon[which(row.names(anc_recon)==node_1),],anc_var[which(row.names(anc_var)==node_1),]),MARGIN = 1,FUN = function(x){stats::rnorm(n = 1,mean = x[1],sd = sqrt(x[2])) })
+        value_2<-apply(X = cbind(anc_recon[which(row.names(anc_recon)==node_2),],anc_var[which(row.names(anc_var)==node_2),]),MARGIN = 1,FUN = function(x){stats::rnorm(n = 1,mean = x[1],sd = sqrt(x[2])) })
         
         
-        bl<-dist(rbind(value_1,value_2))[1]
+        bl<-stats::dist(rbind(value_1,value_2))[1]
         
         if(rate){
         bl<- (bl/tree$edge.length[i])

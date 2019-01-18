@@ -11,5 +11,8 @@ Imports:
     raster,
     ape,
     Rphylopars,
-    geiger
+    geiger,
+    stats,
+    PhyloMeasures,
+    phytools
 RoxygenNote: 6.0.1
