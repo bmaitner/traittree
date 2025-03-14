@@ -4,7 +4,7 @@
 #' @param tree A phylogeny with branch lengths in units of time.
 #' @param traits a set of trait data where the first column is species name and additional columns are trait data
 #' @param percent If TRUE, branch lengths returned will reflect percent change, rather than absolute amount of change.
-#' @return phylo formate phylogeny
+#' @return phylo formatted phylogeny
 #' @note This function DOES NOT account for uncertainty in estimated ancestral traits.
 #' @examples \dontrun{
 #' Write example text

@@ -6,7 +6,7 @@
 #' @param tree A phylogeny with branch lengths in units of time.
 #' @param traits a set of trait data where the first column is species name and additional columns are trait data
 #' @param rate If TRUE, branch lengths returned will reflect rates of change, rather than absolute amount of change.
-#' @return phylo formate phylogeny
+#' @return phylo formatted phylogeny
 #' @note This function accounts for uncertainty in estimated ancestral traits and can be run multiple times to generate a distribution of phylogenies.
 #' @examples \dontrun{
 #' Write example text
