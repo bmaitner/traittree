@@ -4,7 +4,13 @@
 \alias{calculate_pd_metric_rasters}
 \title{Calculate time- and trait-scaled phylogenies and pd/pdi rasters}
 \usage{
-calculate_pd_metric_rasters(occurrences, phylogeny, traits, template.raster)
+calculate_pd_metric_rasters(
+  occurrences,
+  phylogeny,
+  traits,
+  template.raster,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{occurrences}{A set of occurrences in "tidy" format: first column is species name, second is raster cells where the species occurs.}
@@ -14,6 +20,8 @@ calculate_pd_metric_rasters(occurrences, phylogeny, traits, template.raster)
 \item{traits}{a set of trait data where the first column is species name and additional columns are trait data}
 
 \item{template.raster}{The raster that corresponds to the cell numbers in the second column of the occurrences file}
+
+\item{verbose}{Logical. If TRUE, report progress while querying cells. Defaults to FALSE.}
 }
 \value{
 List containing 4 rasters and 3 phylogenies (original, trait-scaled and rate-scaled)
