@@ -9,23 +9,23 @@
 #' }
 #' @export
 richness_raster<-function(template.raster,occurrences){
-#richness<-NULL
-#for( i in 1:ncell(template.raster)){
-#  print(i)
-#  richness<-c(richness,length(which(occurrencses[,2]==i)))  
-#}
-
-#richness<-setValues(x = template.raster,values = richness)
 
   output_raster<-template.raster
   output_raster<-raster::setValues(x = output_raster,values = NA)
   
-  #iterate through all cells with at least one occurrence, record 
+  #Count the distinct species in each occupied cell.  Scanning the occurrences
+  #once per cell is quadratic in the size of the problem, so instead drop
+  #repeated species-cell pairs and tally the remaining rows in a single pass.
   
-  output_raster[as.numeric(unique(occurrences[,2]))] <- sapply(X = unique(occurrences[,2]),FUN = function(x){ length(unique(occurrences[which(occurrences[,2]==x),1]))} )
+  species<-as.character(occurrences[,1])
+  cells<-as.character(occurrences[,2])
+  
+  distinct_pairs<-!duplicated(data.frame(cells,species))
+  
+  richness<-table(cells[distinct_pairs])
+  
+  output_raster[as.numeric(names(richness))]<-as.numeric(richness)
 
   return(output_raster)
 
 }
-
-
