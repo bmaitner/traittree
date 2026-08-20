@@ -8,7 +8,8 @@ scale_branches_multidimensional(
   tree,
   traits,
   rate = FALSE,
-  return_traits = FALSE
+  return_traits = FALSE,
+  pheno_error = NULL
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ scale_branches_multidimensional(
 \item{rate}{If TRUE, branch lengths returned will reflect rates of change, rather than absolute amount of change.}
 
 \item{return_traits}{Logical. Defaults = FALSE. IF TRUE, object returned will be a list containing 1) the phylogeny, and 2) traits for the tips.}
+
+\item{pheno_error}{Logical, or NULL (the default). Controls whether ancestral state reconstruction estimates a within-species (phenotypic) error term. When NULL, the setting is taken from the data: TRUE if at least one species has two or more observations of at least one trait, and FALSE otherwise. Supply TRUE or FALSE to override. Note that this reproduces the results of the Rphylopars defaults rather than changing them: with a single observation per species phylopars() fits no within-species term regardless of the setting. It matters for replicated data, where the two choices give substantially different reconstructions, and a warning is issued if replication is too sparse to be clearly intentional.}
 }
 \value{
 phylo formate phylogeny
