@@ -39,41 +39,25 @@ scale_branches_by_traits_fastAnc<-function(tree,traits,percent=FALSE){
   #Manual version: for each branch, figure out the corresponding nodes, get the trait values, set the branch length as the difference between those nodes.
   #in the phylo file, phylo$edge is a matrix listing the nodes corresponding to each edge.  the order is identical to that in phylo$edge.length, so changing branch lengths should be easy
   
+  #Indexing a named vector by name is a linear scan of the names, so looking the
+  #nodes up one edge at a time is quadratic in tree size.  Match every edge at once instead.
+  
+  node_names <- names(fast_anc_output)
+  
+  value_1 <- fast_anc_output[match(as.character(tree$edge[,1]), node_names)]#beginning of branch
+  value_2 <- fast_anc_output[match(as.character(tree$edge[,2]), node_names)]#end of branch
+  
   if(!percent){
-    output_branches<-matrix(data=NA,nrow=length(tree$edge.length),ncol = 1)
-    for(i in 1:length(tree$edge.length)){
-      node_1<- tree$edge[i,][1]
-      node_2<- tree$edge[i,][2]
-      
-      value_1<-fast_anc_output[as.character(node_1)]
-      value_2<-fast_anc_output[as.character(node_2)]
-      
-      bl<-as.numeric(abs(value_1-value_2))
-      output_branches[i]<-bl
-      
-    }
-  }#percent=false
-  
-  if(percent){
     
-    output_branches<-matrix(data=NA,nrow=length(tree$edge.length),ncol = 1)
-    for(i in 1:length(tree$edge.length)){
-      node_1<- tree$edge[i,][1]
-      node_2<- tree$edge[i,][2]
-      
-      value_1<-fast_anc_output[as.character(node_1)]#beginning of branch
-      value_2<-fast_anc_output[as.character(node_2)]#end of branch
-      
-      bl<-abs(((value_1 - value_2 )/value_1))*100
-      
-      output_branches[i]<-bl
-      
-      
-    }#i loop 2
+    output_branches <- abs(value_1 - value_2)
     
-  }#if percent
+  }else{
+    
+    output_branches <- abs((value_1 - value_2)/value_1)*100
+    
+  }
   
-  
+  output_branches <- unname(output_branches)
   
   tree$edge.length<-output_branches
   
