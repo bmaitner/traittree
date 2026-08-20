@@ -11,9 +11,12 @@ test_that("fastAnc branch lengths match the reference loop", {
 
   for(percent in c(FALSE, TRUE)){
 
-    scaled <- scale_branches_by_traits_fastAnc(tree = sim$tree,
-                                               traits = trait_vector,
-                                               percent = percent)
+    # simulated traits are centred on zero, so percent = TRUE warns about the
+    # denominator; that warning has its own tests.
+    scaled <- suppressWarnings(
+      scale_branches_by_traits_fastAnc(tree = sim$tree,
+                                       traits = trait_vector,
+                                       percent = percent))
 
     expected <- reference_scale_branches_by_traits_fastAnc(tree = sim$tree,
                                                            traits = trait_vector,
@@ -53,10 +56,10 @@ test_that("rphylopars branch lengths match the reference loop, trait by trait", 
 
   for(percent in c(FALSE, TRUE)){
 
-    scaled <- suppressMessages(
+    scaled <- suppressWarnings(suppressMessages(
       scale_branches_by_traits_rphylopars(tree = sim$tree,
                                           traits = sim$traits,
-                                          percent = percent))
+                                          percent = percent)))
 
     expected <- reference_scale_branches_by_traits_rphylopars(tree = sim$tree,
                                                               traits = sim$traits,

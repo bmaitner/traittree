@@ -87,27 +87,34 @@ add_missing_values <- function(traits, proportion = 0.3, seed = 3){
 
 # Median elapsed seconds for one evaluation of expr.  Repeats until at least
 # `min_time` of work has accumulated, so sub-millisecond operations can be timed
-# without the clock resolution dominating.
+# without the clock resolution dominating, and takes the median over several
+# rounds so that a single garbage collection does not decide the result.
 
-time_per_call <- function(expr, min_time = 0.2){
+time_per_call <- function(expr, min_time = 0.2, rounds = 3){
 
   expression <- substitute(expr)
   env <- parent.frame()
 
-  repetitions <- 1
+  one_round <- function(){
 
-  repeat {
+    repetitions <- 1
 
-    elapsed <- system.time(for(i in seq_len(repetitions)) eval(expression, env))[["elapsed"]]
+    repeat {
 
-    if(elapsed >= min_time || repetitions > 1e5){
+      elapsed <- system.time(for(i in seq_len(repetitions)) eval(expression, env))[["elapsed"]]
 
-      return(elapsed/repetitions)
+      if(elapsed >= min_time || repetitions > 1e5){
+
+        return(elapsed/repetitions)
+
+      }
+
+      repetitions <- repetitions * 4
 
     }
 
-    repetitions <- repetitions * 4
-
   }
+
+  stats::median(vapply(seq_len(rounds), function(i) one_round(), numeric(1)))
 
 }
