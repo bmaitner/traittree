@@ -49,6 +49,15 @@ simulate_traits <- function(n_tips = 30, n_traits = 4, seed = 1){
 
   trait_values <- phytools::sim.corrs(tree = tree, vcv = sigma)
 
+  # sim.corrs returns a bare named vector for a single trait.
+  if(is.null(dim(trait_values))){
+
+    trait_values <- matrix(trait_values,
+                           ncol = 1,
+                           dimnames = list(names(trait_values), NULL))
+
+  }
+
   traits <- data.frame(species = row.names(trait_values),
                        trait_values,
                        row.names = NULL,

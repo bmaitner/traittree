@@ -115,65 +115,8 @@ test_that("rphylopars variant resolves and forwards pheno_error", {
 
 })
 
-test_that("with_variation collapses to the deterministic distances when variance is zero", {
-
-  sim <- simulate_traits(n_tips = 30, seed = 34)
-
-  anc_recon <- Rphylopars::phylopars(trait_data = sim$traits,
-                                     tree = sim$tree,
-                                     pheno_error = FALSE)$anc_recon
-
-  # With no uncertainty every draw returns its mean, so the sampled tree must
-  # reduce to the branch lengths the deterministic function produces.
-  local_mocked_bindings(
-    phylopars = function(trait_data, tree, pheno_error, ...){
-
-      list(anc_recon = anc_recon,
-           anc_var = matrix(0, nrow = nrow(anc_recon), ncol = ncol(anc_recon),
-                            dimnames = dimnames(anc_recon)))
-
-    },
-    .package = "traittree")
-
-  for(rate in c(FALSE, TRUE)){
-
-    sampled <- suppressMessages(
-      scale_branches_multidimensional_with_variation(tree = sim$tree,
-                                                     traits = sim$traits,
-                                                     rate = rate))
-
-    expect_equal(as.numeric(sampled$edge.length),
-                 edge_trait_distances(sim$tree, anc_recon, rate = rate),
-                 tolerance = 1e-10)
-
-  }
-
-})
-
-test_that("with_variation still draws each end of each edge independently", {
-
-  skip_on_cran()
-
-  sim <- simulate_traits(n_tips = 30, seed = 34)
-
-  # Sampled trees vary from call to call, and are never identical to the
-  # deterministic reconstruction.
-  set.seed(99)
-  first <- suppressMessages(
-    scale_branches_multidimensional_with_variation(tree = sim$tree, traits = sim$traits))
-  second <- suppressMessages(
-    scale_branches_multidimensional_with_variation(tree = sim$tree, traits = sim$traits))
-
-  expect_false(isTRUE(all.equal(first$edge.length, second$edge.length)))
-  expect_true(all(is.finite(first$edge.length)))
-  expect_length(first$edge.length, nrow(sim$tree$edge))
-  expect_null(dim(first$edge.length))
-
-})
-
 test_that("richness_raster matches the reference implementation", {
 
-  suppressMessages(library(raster))
 
   template <- raster::raster(nrows = 20, ncols = 20)
 
@@ -182,16 +125,16 @@ test_that("richness_raster matches the reference implementation", {
                             cell = sample(400, 400, replace = TRUE),
                             stringsAsFactors = FALSE)
 
-  expect_equal(raster::values(richness_raster(template.raster = template,
-                                              occurrences = occurrences)),
-               raster::values(reference_richness_raster(template.raster = template,
-                                                        occurrences = occurrences)))
+  # identical, not merely equal: counts should stay integers, as before.
+  expect_identical(raster::values(richness_raster(template.raster = template,
+                                                  occurrences = occurrences)),
+                   raster::values(reference_richness_raster(template.raster = template,
+                                                            occurrences = occurrences)))
 
 })
 
 test_that("richness_raster counts distinct species and leaves empty cells NA", {
 
-  suppressMessages(library(raster))
 
   template <- raster::raster(nrows = 5, ncols = 5)
 

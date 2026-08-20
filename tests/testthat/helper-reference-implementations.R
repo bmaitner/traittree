@@ -166,3 +166,43 @@ reference_richness_raster<-function(template.raster,occurrences){
   return(output_raster)
 
 }
+
+
+# Exact joint posterior of the internal node states under Brownian motion with
+# an improper prior on the root, built densely from the tree's shared path
+# lengths.  Quadratic in tree size, so only usable on small trees, but it is an
+# independent check on the linear-time sampler used in the package.
+# Univariate: `x_tips` is a named vector, `R` the scalar rate.
+
+exact_joint_posterior <- function(tree, x_tips, R){
+
+  n <- length(tree$tip.label)
+  n_nodes <- 2 * n - 1
+
+  # shared root-to-MRCA path length between every pair of nodes
+  depth <- ape::node.depth.edgelength(tree)
+  C <- matrix(depth[ape::mrca(tree, full = TRUE)], nrow = n_nodes, ncol = n_nodes)
+
+  tips <- 1:n
+  internal <- (n + 1):n_nodes
+
+  C_tips_inv <- solve(C[tips, tips])
+  C_internal_tips <- C[internal, tips, drop = FALSE]
+
+  ones_tips <- rep(1, n)
+  ones_internal <- rep(1, length(internal))
+
+  # improper root prior: root estimated by GLS, with its uncertainty carried
+  # into the conditional covariance
+  denominator <- as.numeric(t(ones_tips) %*% C_tips_inv %*% ones_tips)
+  root <- as.numeric(t(ones_tips) %*% C_tips_inv %*% x_tips[tree$tip.label])/denominator
+
+  weights <- C_internal_tips %*% C_tips_inv
+  residual <- ones_internal - as.numeric(weights %*% ones_tips)
+
+  list(mean = as.numeric(root + weights %*% (x_tips[tree$tip.label] - ones_tips * root)),
+       cov = (C[internal, internal] -
+                weights %*% t(C_internal_tips) +
+                outer(residual, residual)/denominator) * R)
+
+}
