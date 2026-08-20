@@ -42,6 +42,8 @@ if(!percent){
   
 }else{
   
+  warn_unstable_percent_change(denominator = value_1)
+  
   output_branches<-abs((value_1 - value_2)/value_1)*100
   
 }
