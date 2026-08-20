@@ -25,11 +25,31 @@ edge_trait_distances <- function(tree,
 
   node_ids <- as.integer(row.names(anc_recon))
 
-  row_1 <- match(tree$edge[,1], node_ids)
-  row_2 <- match(tree$edge[,2], node_ids)
+  #Put the rows into node order, then take the distances edge by edge.
+  node_values <- anc_recon[match(seq_len(max(tree$edge)), node_ids), , drop = FALSE]
 
-  squared_change <- (anc_recon[row_1, , drop = FALSE] -
-                       anc_recon[row_2, , drop = FALSE])^2
+  edge_distances_from_node_values(tree = tree,
+                                  node_values = node_values,
+                                  rate = rate)
+
+}
+
+#' Euclidean distance across each edge, from node-ordered values
+#'
+#' Internal helper.  As `edge_trait_distances()`, but taking a matrix whose rows
+#' are already in `ape` node order rather than one labelled by node name.
+#'
+#' @param tree A phylogeny with branch lengths in units of time.
+#' @param node_values Matrix of trait values, one row per node in node order.
+#' @param rate If TRUE, distances are divided by the original branch lengths.
+#' @return Numeric vector, one element per edge, in `tree$edge` order.
+#' @noRd
+edge_distances_from_node_values <- function(tree,
+                                            node_values,
+                                            rate = FALSE){
+
+  squared_change <- (node_values[tree$edge[,1], , drop = FALSE] -
+                       node_values[tree$edge[,2], , drop = FALSE])^2
 
   branch_lengths <- sqrt(rowSums(squared_change))
 

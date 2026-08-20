@@ -24,7 +24,7 @@ richness_raster<-function(template.raster,occurrences){
   
   richness<-table(cells[distinct_pairs])
   
-  output_raster[as.numeric(names(richness))]<-as.numeric(richness)
+  output_raster[as.numeric(names(richness))]<-as.integer(richness)
 
   return(output_raster)
 
