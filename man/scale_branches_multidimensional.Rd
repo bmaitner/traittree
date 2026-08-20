@@ -4,7 +4,12 @@
 \alias{scale_branches_multidimensional}
 \title{Scale the branches of a phylogeny according to phenotypic change.}
 \usage{
-scale_branches_multidimensional(tree, traits, rate = F)
+scale_branches_multidimensional(
+  tree,
+  traits,
+  rate = FALSE,
+  return_traits = FALSE
+)
 }
 \arguments{
 \item{tree}{A phylogeny with branch lengths in units of time.}
@@ -12,6 +17,8 @@ scale_branches_multidimensional(tree, traits, rate = F)
 \item{traits}{a set of trait data where the first column is species name and additional columns are trait data}
 
 \item{rate}{If TRUE, branch lengths returned will reflect rates of change, rather than absolute amount of change.}
+
+\item{return_traits}{Logical. Defaults = FALSE. IF TRUE, object returned will be a list containing 1) the phylogeny, and 2) traits for the tips.}
 }
 \value{
 phylo formate phylogeny
