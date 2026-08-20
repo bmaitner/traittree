@@ -4,7 +4,12 @@
 \alias{scale_branches_by_traits_rphylopars}
 \title{Scale the branches of a phylogeny according to phenotypic change.}
 \usage{
-scale_branches_by_traits_rphylopars(tree, traits, percent = FALSE)
+scale_branches_by_traits_rphylopars(
+  tree,
+  traits,
+  percent = FALSE,
+  pheno_error = NULL
+)
 }
 \arguments{
 \item{tree}{A phylogeny with branch lengths in units of time.}
@@ -12,6 +17,8 @@ scale_branches_by_traits_rphylopars(tree, traits, percent = FALSE)
 \item{traits}{a set of trait data where the first column is species name and additional columns are trait data}
 
 \item{percent}{If TRUE, branch lengths returned will reflect percent change, rather than absolute amount of change.}
+
+\item{pheno_error}{Logical, or NULL (the default). Controls whether ancestral state reconstruction estimates a within-species (phenotypic) error term. When NULL, the setting is taken from the data: TRUE if at least one species has two or more observations of at least one trait, and FALSE otherwise. Supply TRUE or FALSE to override. See \code{scale_branches_multidimensional}.}
 }
 \value{
 phylo formatted phylogeny

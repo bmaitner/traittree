@@ -5,7 +5,13 @@
 \alias{scale_branches_multidimensional_with_variation}
 \title{Scale the branches of a phylogeny according to phenotypic change, accounting for uncertainty.}
 \usage{
-scale_branches_multidimensional_with_variation(tree, traits, rate = F)
+scale_branches_multidimensional_with_variation(
+  tree,
+  traits,
+  rate = FALSE,
+  n_trees = 1,
+  pheno_error = NULL
+)
 }
 \arguments{
 \item{tree}{A phylogeny with branch lengths in units of time.}
@@ -13,15 +19,19 @@ scale_branches_multidimensional_with_variation(tree, traits, rate = F)
 \item{traits}{a set of trait data where the first column is species name and additional columns are trait data}
 
 \item{rate}{If TRUE, branch lengths returned will reflect rates of change, rather than absolute amount of change.}
+
+\item{n_trees}{Number of trees to generate. Defaults to 1.}
+
+\item{pheno_error}{Logical, or NULL (the default). Controls whether ancestral state reconstruction estimates a within-species (phenotypic) error term. When NULL, the setting is taken from the data: TRUE if at least one species has two or more observations of at least one trait, and FALSE otherwise. Supply TRUE or FALSE to override. See \code{scale_branches_multidimensional}.}
 }
 \value{
-phylo formatted phylogeny
+A phylo object when \code{n_trees} is 1, otherwise a multiPhylo object of length \code{n_trees}.
 }
 \description{
 scale_branches_multidimensional_with_variation
 }
 \note{
-This function accounts for uncertainty in estimated ancestral traits and can be run multiple times to generate a distribution of phylogenies.
+This function accounts for uncertainty in the estimated ancestral traits. Each tree is a draw from the joint posterior of the ancestral states, so a node takes a single value shared by all of the branches that meet at it, and correlations both between nodes and between traits are respected. Run with \code{n_trees > 1} to obtain a distribution of trees over which downstream analyses can be repeated.
 }
 \examples{
 \dontrun{
