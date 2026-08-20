@@ -15,7 +15,7 @@ scale_branches_multidimensional_with_variation(tree, traits, rate = F)
 \item{rate}{If TRUE, branch lengths returned will reflect rates of change, rather than absolute amount of change.}
 }
 \value{
-phylo formate phylogeny
+phylo formatted phylogeny
 }
 \description{
 scale_branches_multidimensional_with_variation
