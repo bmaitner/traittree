@@ -14,7 +14,7 @@ scale_branches_by_traits_rphylopars(tree, traits, percent = FALSE)
 \item{percent}{If TRUE, branch lengths returned will reflect percent change, rather than absolute amount of change.}
 }
 \value{
-phylo formate phylogeny
+phylo formatted phylogeny
 }
 \description{
 scale_branches_by_traits_rphylopars
