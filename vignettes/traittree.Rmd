@@ -1,0 +1,235 @@
+---
+title: "Scaling phylogenies by phenotypic change"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Scaling phylogenies by phenotypic change}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 6,
+  fig.height = 4
+)
+```
+
+```{r setup}
+library(traittree)
+```
+
+## The idea
+
+A time-scaled phylogeny measures every branch in the same currency: elapsed
+time. That is often not the currency a question is asked in. Two lineages that
+split ten million years ago may have diverged enormously or barely at all, and a
+diversity metric built on time cannot tell those cases apart.
+
+This package rewrites branch lengths so that they measure phenotypic change
+instead. Ancestral trait values are reconstructed at every node, and each branch
+becomes the distance in trait space between the nodes at its ends.
+
+The package ships simulated data for 60 imaginary species: a phylogeny, three
+traits, and occurrences over a 10 by 10 grid.
+
+```{r data}
+example_tree
+
+head(example_traits)
+
+head(example_occurrences)
+```
+
+## Scaling a tree by trait change
+
+```{r scale}
+trait_tree <- scale_branches_multidimensional(tree = example_tree,
+                                              traits = example_traits)
+```
+
+The topology is untouched; only the branch lengths change.
+
+```{r compare, fig.alt = "Trait change against elapsed time for each branch"}
+plot(example_tree$edge.length, trait_tree$edge.length,
+     xlab = "branch length (time)",
+     ylab = "branch length (trait change)",
+     pch = 16, col = "#4477aa")
+```
+
+The relationship is positive — more time generally means more change — but far
+from tight, and that scatter is the point of the exercise.
+
+Passing `rate = TRUE` divides by the original branch lengths, giving rates of
+change rather than absolute amounts:
+
+```{r rate}
+rate_tree <- scale_branches_multidimensional(tree = example_tree,
+                                             traits = example_traits,
+                                             rate = TRUE)
+```
+
+## Traits have units, and units should not matter
+
+Branch lengths here are Euclidean distances across traits. Body mass in grams
+runs to hundreds; bill depth in millimetres runs to tens. Left alone, the first
+trait would dominate simply because its numbers are bigger, and re-expressing it
+in kilograms would change the answer.
+
+By default each trait is therefore divided by its standard deviation across
+species. Compare the two:
+
+```{r scaling}
+scaled <- scale_branches_multidimensional(example_tree, example_traits)
+
+raw <- suppressWarnings(
+  scale_branches_multidimensional(example_tree, example_traits,
+                                  scale_traits = FALSE))
+
+cor(scaled$edge.length, raw$edge.length)
+```
+
+Using the traits as supplied emits a warning naming the traits whose spreads
+differ most, because that choice is rarely deliberate. It is sometimes the right
+one: if your traits are already on a common scale — all log-transformed, say —
+their relative spread is itself meaningful, and scaling would flatten a real
+difference in evolutionary rate. That is what `scale_traits = FALSE` is for.
+
+`weights` gives finer control, applied to the squared differences:
+
+```{r weights}
+mass_heavy <- scale_branches_multidimensional(example_tree, example_traits,
+                                              weights = c(2, 1, 1))
+```
+
+## Carrying uncertainty through
+
+Ancestral states are estimates. Treating them as known throws away everything we
+know about how uncertain they are.
+
+`scale_branches_multidimensional_with_variation()` draws trees from the joint
+posterior of the ancestral states. Each tree is one coherent realisation: a node
+takes a single value shared by every branch meeting there, and the correlations
+between neighbouring nodes and between traits are preserved.
+
+```{r posterior}
+trees <- scale_branches_multidimensional_with_variation(tree = example_tree,
+                                                        traits = example_traits,
+                                                        n_trees = 50)
+
+class(trees)
+```
+
+The spread across trees is the reconstruction uncertainty:
+
+```{r spread, fig.alt = "Uncertainty in each branch length against its estimated length"}
+branch_lengths <- vapply(trees, function(x) x$edge.length,
+                         numeric(nrow(example_tree$edge)))
+
+plot(rowMeans(branch_lengths), apply(branch_lengths, 1, sd),
+     xlab = "mean branch length", ylab = "standard deviation",
+     pch = 16, col = "#4477aa")
+```
+
+Why the joint posterior rather than each node's own variance? Because branch
+lengths are *differences* between adjacent nodes, and adjacent nodes are
+strongly correlated. Sampling each node independently ignores that correlation
+and inflates branch lengths, worst on the short branches where trait-scaled
+trees carry the most information.
+
+## Within-species variation
+
+`Rphylopars::phylopars()` estimates a within-species error term whenever the
+argument is left unset. With a single observation per species there is nothing
+to estimate it from, so this package decides from the data: the term is used
+only when at least one species has two or more observations of a trait.
+
+```{r pheno, eval = FALSE}
+# forced on or off, whatever the data look like
+scale_branches_multidimensional(example_tree, example_traits, pheno_error = TRUE)
+```
+
+Replicate observations are simply extra rows for the same species. When
+replication is very sparse — a single duplicated row in a large table, which is
+more often a data-entry artifact than a measurement — you get a warning, because
+that one row would otherwise switch the model silently.
+
+## From trees to maps
+
+`data_matching()` prunes a tree and an occurrence table down to their shared
+species, and `richness_raster()` counts species per cell:
+
+```{r spatial}
+template <- raster::raster(nrows = 10, ncols = 10)
+
+matched <- data_matching(phylogeny = example_tree,
+                         occurrences = example_occurrences)
+
+richness <- richness_raster(template.raster = template,
+                            occurrences = example_occurrences)
+```
+
+`calculate_pd_metric_rasters()` puts the whole workflow together, returning
+phylogenetic diversity computed on both the time-scaled and trait-scaled trees:
+
+```{r pd}
+result <- calculate_pd_metric_rasters(occurrences = example_occurrences,
+                                      phylogeny = example_tree,
+                                      traits = example_traits,
+                                      template.raster = template)
+
+names(result$pd_stack)
+```
+
+Passing `n_trees` propagates the reconstruction uncertainty all the way to the
+maps. The time-based layers are unaffected — they do not involve the traits — but
+the trait-based ones are replaced by a mean, a standard deviation, and an
+interval across trees:
+
+```{r pd_uncertainty}
+sampled <- calculate_pd_metric_rasters(occurrences = example_occurrences,
+                                       phylogeny = example_tree,
+                                       traits = example_traits,
+                                       template.raster = template,
+                                       n_trees = 25)
+
+names(sampled$pd_stack)
+
+summary(raster::values(sampled$pd_stack[["pd_traits_sd"]]))
+```
+
+That last column is the part a single point estimate cannot show you: how much
+of the spatial pattern in trait-based diversity is real, and how much is an
+artifact of not knowing the ancestral states.
+
+If you already have trait-scaled trees in hand, pass them directly with
+`trait_phylo` instead of having them rebuilt.
+
+## Single traits, one tree at a time
+
+Two older functions handle the univariate case. `scale_branches_by_traits_rphylopars()`
+returns one tree per trait:
+
+```{r univariate}
+per_trait <- scale_branches_by_traits_rphylopars(tree = example_tree,
+                                                 traits = example_traits)
+
+names(per_trait)
+```
+
+and `scale_branches_by_traits_fastAnc()` takes a single trait as a named vector,
+reconstructing it with `phytools::fastAnc()`:
+
+```{r fastanc}
+body_mass <- example_traits$body_mass_g
+names(body_mass) <- example_traits$species
+
+mass_tree <- scale_branches_by_traits_fastAnc(tree = example_tree,
+                                              traits = body_mass)
+```
+
+Both accept `percent = TRUE`, which expresses change relative to the ancestral
+value at the start of each branch. That measure assumes a denominator safely
+away from zero and positive; log-transformed or centred traits satisfy neither,
+and you will be warned when they do not.
