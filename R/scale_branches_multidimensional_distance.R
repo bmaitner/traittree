@@ -70,6 +70,8 @@ edge_distances_from_node_values <- function(tree,
 #' @param traits a set of trait data where the first column is species name and additional columns are trait data
 #' @param rate If TRUE, branch lengths returned will reflect rates of change, rather than absolute amount of change.
 #' @param return_traits Logical. Defaults = FALSE. IF TRUE, object returned will be a list containing 1) the phylogeny, and 2) traits for the tips.
+#' @param scale_traits Logical. Defaults to TRUE, which divides each trait by its standard deviation across species before distances are taken, so that branch lengths do not depend on the units each trait happens to be measured in. Set to FALSE to use the traits as supplied, which is appropriate when they are already on a common scale (all log transformed, say) and their relative spread is itself meaningful, since scaling would then force every trait to contribute equally.
+#' @param weights Optional numeric vector of weights on the squared differences, one per trait, applied after any scaling. Defaults to NULL, meaning equal weights.
 #' @param pheno_error Logical, or NULL (the default). Controls whether ancestral state reconstruction estimates a within-species (phenotypic) error term. When NULL, the setting is taken from the data: TRUE if at least one species has two or more observations of at least one trait, and FALSE otherwise. Supply TRUE or FALSE to override. Note that this reproduces the results of the Rphylopars defaults rather than changing them: with a single observation per species phylopars() fits no within-species term regardless of the setting. It matters for replicated data, where the two choices give substantially different reconstructions, and a warning is issued if replication is too sparse to be clearly intentional.
 #' @return phylo formate phylogeny
 #' @note This function DOES NOT account for uncertainty in estimated ancestral traits.
@@ -82,6 +84,8 @@ scale_branches_multidimensional <- function(tree,
                                           traits,
                                           rate = FALSE,
                                           return_traits = FALSE,
+                                          scale_traits = TRUE,
+                                          weights = NULL,
                                           pheno_error = NULL){
   
   
@@ -108,6 +112,24 @@ scale_branches_multidimensional <- function(tree,
       
     }
     
+      #Traits enter the distance in whatever units they were measured in, so
+      #rescale the reconstruction before measuring.  Doing it here rather than
+      #to the input data is equivalent, and leaves return_traits in the units
+      #the caller supplied.
+      
+      multipliers <- trait_scaling_multipliers(traits = traits,
+                                               scale_traits = scale_traits,
+                                               weights = weights)
+      
+      if(!scale_traits && is.null(weights)){
+        
+        warn_dominant_trait_scale(traits = traits)
+        
+      }
+      
+      anc_recon <- apply_trait_multipliers(node_values = anc_recon,
+                                           multipliers = multipliers)
+      
       tree_x <- tree
       
       tree_x$edge.length <- edge_trait_distances(tree = tree,

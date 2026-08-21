@@ -6,6 +6,8 @@
 #' @param traits a set of trait data where the first column is species name and additional columns are trait data
 #' @param rate If TRUE, branch lengths returned will reflect rates of change, rather than absolute amount of change.
 #' @param n_trees Number of trees to generate. Defaults to 1.
+#' @param scale_traits Logical. Defaults to TRUE, which divides each trait by its standard deviation across species before distances are taken, so that branch lengths do not depend on the units each trait happens to be measured in. See \code{scale_branches_multidimensional}.
+#' @param weights Optional numeric vector of weights on the squared differences, one per trait, applied after any scaling. Defaults to NULL, meaning equal weights.
 #' @param pheno_error Logical, or NULL (the default). Controls whether ancestral state reconstruction estimates a within-species (phenotypic) error term. When NULL, the setting is taken from the data: TRUE if at least one species has two or more observations of at least one trait, and FALSE otherwise. Supply TRUE or FALSE to override. See \code{scale_branches_multidimensional}.
 #' @return A phylo object when \code{n_trees} is 1, otherwise a multiPhylo object of length \code{n_trees}.
 #' @note This function accounts for uncertainty in the estimated ancestral traits. Each tree is a draw from the joint posterior of the ancestral states, so a node takes a single value shared by all of the branches that meet at it, and correlations both between nodes and between traits are respected. Run with \code{n_trees > 1} to obtain a distribution of trees over which downstream analyses can be repeated.
@@ -18,6 +20,8 @@ scale_branches_multidimensional_with_variation<-function(tree,
                                                          traits,
                                                          rate=FALSE,
                                                          n_trees=1,
+                                                         scale_traits=TRUE,
+                                                         weights=NULL,
                                                          pheno_error=NULL){
   
   if(!is.numeric(n_trees) || length(n_trees) != 1 || is.na(n_trees) || n_trees < 1){
@@ -45,6 +49,18 @@ scale_branches_multidimensional_with_variation<-function(tree,
   phylocov <- phylopars_output$pars$phylocov
   phenocov <- phylopars_output$pars$phenocov
   
+  #As in scale_branches_multidimensional(), rescale the traits before the
+  #distances are taken so that units do not decide the branch lengths.
+  multipliers <- trait_scaling_multipliers(traits = traits,
+                                           scale_traits = scale_traits,
+                                           weights = weights)
+  
+  if(!scale_traits && is.null(weights)){
+    
+    warn_dominant_trait_scale(traits = traits)
+    
+  }
+  
   output_trees <- vector(mode = "list", length = n_trees)
   
   for(i in seq_len(n_trees)){
@@ -60,9 +76,11 @@ scale_branches_multidimensional_with_variation<-function(tree,
     
     #A node carries one sampled value, so the branch lengths are the distances
     #between adjacent nodes of a single coherent realization.
-    tree_i$edge.length <- edge_distances_from_node_values(tree = tree,
-                                                          node_values = sampled_states,
-                                                          rate = rate)
+    tree_i$edge.length <- edge_distances_from_node_values(
+      tree = tree,
+      node_values = apply_trait_multipliers(node_values = sampled_states,
+                                            multipliers = multipliers),
+      rate = rate)
     
     output_trees[[i]] <- tree_i
     
