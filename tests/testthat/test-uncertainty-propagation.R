@@ -120,10 +120,13 @@ test_that("sampled branch lengths are not inflated the way marginal sampling wou
   n_draws <- 400
 
   set.seed(5)
+  # scale_traits = FALSE so this matches the hand-rolled marginal sampler below,
+  # which works in the traits' original units.
   joint <- suppressMessages(
     scale_branches_multidimensional_with_variation(tree = sim$tree,
                                                    traits = sim$traits,
-                                                   n_trees = n_draws))
+                                                   n_trees = n_draws,
+                                                   scale_traits = FALSE))
 
   joint_means <- colMeans(do.call(rbind, lapply(joint, function(x) x$edge.length)))
 

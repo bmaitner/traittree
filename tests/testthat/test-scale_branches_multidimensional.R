@@ -13,9 +13,12 @@ test_that("vectorized branch lengths match the edge-at-a-time reference (complet
 
   for(rate in c(FALSE, TRUE)){
 
+    # scale_traits = FALSE: this test is about the branch-length assignment,
+    # not the trait scaling, which has its own tests.
     scaled <- scale_branches_multidimensional(tree = sim$tree,
                                               traits = sim$traits,
-                                              rate = rate)
+                                              rate = rate,
+                                              scale_traits = FALSE)
 
     expected <- reference_branch_lengths(tree = sim$tree,
                                          anc_recon = anc_recon,
@@ -41,7 +44,8 @@ test_that("vectorized branch lengths match the reference when traits are missing
 
     scaled <- scale_branches_multidimensional(tree = sim$tree,
                                               traits = traits,
-                                              rate = rate)
+                                              rate = rate,
+                                              scale_traits = FALSE)
 
     expected <- reference_branch_lengths(tree = sim$tree,
                                          anc_recon = anc_recon,
