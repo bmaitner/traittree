@@ -11,9 +11,21 @@
 #' @param pheno_error Logical, or NULL (the default). Controls whether ancestral state reconstruction estimates a within-species (phenotypic) error term. When NULL, the setting is taken from the data: TRUE if at least one species has two or more observations of at least one trait, and FALSE otherwise. Supply TRUE or FALSE to override. See \code{scale_branches_multidimensional}.
 #' @return A phylo object when \code{n_trees} is 1, otherwise a multiPhylo object of length \code{n_trees}.
 #' @note This function accounts for uncertainty in the estimated ancestral traits. Each tree is a draw from the joint posterior of the ancestral states, so a node takes a single value shared by all of the branches that meet at it, and correlations both between nodes and between traits are respected. Run with \code{n_trees > 1} to obtain a distribution of trees over which downstream analyses can be repeated.
-#' @examples \dontrun{
-#' Write example text
-#' }
+#' @examples
+#' # A single tree drawn from the joint posterior of the ancestral states
+#' one_tree <- scale_branches_multidimensional_with_variation(tree = example_tree,
+#'                                                            traits = example_traits)
+#'
+#' # A posterior sample, over which a downstream analysis can be repeated
+#' trees <- scale_branches_multidimensional_with_variation(tree = example_tree,
+#'                                                         traits = example_traits,
+#'                                                         n_trees = 20)
+#'
+#' # How uncertain is each branch length?
+#' branch_lengths <- vapply(trees, function(x) x$edge.length,
+#'                          numeric(nrow(example_tree$edge)))
+#'
+#' summary(apply(branch_lengths, 1, stats::sd))
 #' @export
 #' @import Rphylopars
 scale_branches_multidimensional_with_variation<-function(tree,
