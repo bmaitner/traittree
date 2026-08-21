@@ -7,8 +7,11 @@
 calculate_pd_metric_rasters(
   occurrences,
   phylogeny,
-  traits,
+  traits = NULL,
   template.raster,
+  trait_phylo = NULL,
+  n_trees = 1,
+  probs = c(0.025, 0.975),
   verbose = FALSE
 )
 }
@@ -17,17 +20,26 @@ calculate_pd_metric_rasters(
 
 \item{phylogeny}{A phylogeny with time-scaled branch lengths}
 
-\item{traits}{a set of trait data where the first column is species name and additional columns are trait data}
+\item{traits}{a set of trait data where the first column is species name and additional columns are trait data. May be NULL if \code{trait_phylo} is supplied, in which case no rate-scaled phylogeny is returned.}
 
 \item{template.raster}{The raster that corresponds to the cell numbers in the second column of the occurrences file}
+
+\item{trait_phylo}{Optional trait-scaled phylogeny, or a multiPhylo of them, to use instead of scaling the phylogeny internally. Defaults to NULL, meaning scale it here.}
+
+\item{n_trees}{Number of trait-scaled phylogenies to draw from the joint posterior of the ancestral states, so that uncertainty in the reconstruction is carried into the metrics. Defaults to 1, which uses the point estimate and reproduces the previous behaviour. Ignored when \code{trait_phylo} is supplied.}
+
+\item{probs}{The two quantiles summarising the trait-based metrics across trees. Defaults to the central 95 percent.}
 
 \item{verbose}{Logical. If TRUE, report progress while querying cells. Defaults to FALSE.}
 }
 \value{
-List containing 4 rasters and 3 phylogenies (original, trait-scaled and rate-scaled)
+A list with \code{pd_stack}, \code{time_phylo}, \code{trait_phylo} and \code{rate_phylo}. With a single trait-scaled phylogeny, \code{pd_stack} holds \code{pd_time}, \code{pdi_time}, \code{pd_traits} and \code{pdi_traits}. With several, the trait-based layers are replaced by their mean, standard deviation and the two requested quantiles across trees, and \code{trait_phylo} is the multiPhylo that produced them.
 }
 \description{
 calculate_pd_metric_rasters
+}
+\note{
+The time-based metrics do not depend on the traits, so they are computed once and are unaffected by \code{n_trees}.
 }
 \examples{
 \dontrun{

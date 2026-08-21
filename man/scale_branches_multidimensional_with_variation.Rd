@@ -10,6 +10,8 @@ scale_branches_multidimensional_with_variation(
   traits,
   rate = FALSE,
   n_trees = 1,
+  scale_traits = TRUE,
+  weights = NULL,
   pheno_error = NULL
 )
 }
@@ -21,6 +23,10 @@ scale_branches_multidimensional_with_variation(
 \item{rate}{If TRUE, branch lengths returned will reflect rates of change, rather than absolute amount of change.}
 
 \item{n_trees}{Number of trees to generate. Defaults to 1.}
+
+\item{scale_traits}{Logical. Defaults to TRUE, which divides each trait by its standard deviation across species before distances are taken, so that branch lengths do not depend on the units each trait happens to be measured in. See \code{scale_branches_multidimensional}.}
+
+\item{weights}{Optional numeric vector of weights on the squared differences, one per trait, applied after any scaling. Defaults to NULL, meaning equal weights.}
 
 \item{pheno_error}{Logical, or NULL (the default). Controls whether ancestral state reconstruction estimates a within-species (phenotypic) error term. When NULL, the setting is taken from the data: TRUE if at least one species has two or more observations of at least one trait, and FALSE otherwise. Supply TRUE or FALSE to override. See \code{scale_branches_multidimensional}.}
 }
