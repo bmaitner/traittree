@@ -20,7 +20,13 @@ phylo formate phylogeny
 scale_branches_by_traits_fastAnc
 }
 \examples{
-\dontrun{
-Write example text
-}
+# This function takes a single trait, as a vector named by species
+body_mass <- example_traits$body_mass_g
+names(body_mass) <- example_traits$species
+
+mass_tree <- scale_branches_by_traits_fastAnc(tree = example_tree,
+                                              traits = body_mass)
+
+plot(example_tree$edge.length, mass_tree$edge.length,
+     xlab = "time", ylab = "change in body mass")
 }

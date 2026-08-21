@@ -39,7 +39,28 @@ scale_branches_multidimensional
 This function DOES NOT account for uncertainty in estimated ancestral traits.
 }
 \examples{
-\dontrun{
-Write example text
-}
+# Branch lengths become the amount of multivariate trait change along each
+# branch, rather than elapsed time.
+trait_tree <- scale_branches_multidimensional(tree = example_tree,
+                                              traits = example_traits)
+
+plot(example_tree$edge.length, trait_tree$edge.length,
+     xlab = "time", ylab = "trait change")
+
+# Rates of change rather than absolute amounts
+rate_tree <- scale_branches_multidimensional(tree = example_tree,
+                                             traits = example_traits,
+                                             rate = TRUE)
+
+# The example traits are measured in different units, so by default each is
+# divided by its standard deviation before distances are taken.  Using them
+# as supplied warns, because one trait would dominate:
+raw_tree <- try(scale_branches_multidimensional(tree = example_tree,
+                                                traits = example_traits,
+                                                scale_traits = FALSE))
+
+# Weight the traits explicitly instead
+weighted_tree <- scale_branches_multidimensional(tree = example_tree,
+                                                 traits = example_traits,
+                                                 weights = c(2, 1, 1))
 }

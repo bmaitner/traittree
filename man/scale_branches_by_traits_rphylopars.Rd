@@ -30,7 +30,12 @@ scale_branches_by_traits_rphylopars
 This function DOES NOT account for uncertainty in estimated ancestral traits.
 }
 \examples{
-\dontrun{
-Write example text
-}
+# One tree per trait, each scaled by change in that trait alone
+trees <- scale_branches_by_traits_rphylopars(tree = example_tree,
+                                             traits = example_traits)
+
+names(trees)
+
+plot(trees$body_mass_g$edge.length, trees$wing_mm$edge.length,
+     xlab = "change in body mass", ylab = "change in wing length")
 }

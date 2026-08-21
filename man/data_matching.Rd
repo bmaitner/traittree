@@ -18,7 +18,11 @@ List the pruned phylogeny and occurrences data
 data_matching
 }
 \examples{
-\dontrun{
-Write example text
-}
+matched <- data_matching(phylogeny = example_tree,
+                         occurrences = example_occurrences)
+
+# Species without occurrences are dropped from the tree, and occurrences of
+# species absent from the tree are dropped from the table.
+length(matched$phylogeny$tip.label)
+nrow(matched$occurrences)
 }

@@ -12,13 +12,16 @@ richness_raster(template.raster, occurrences)
 \item{occurrences}{A set of occurrences in "tidy" format: first column is species name, second is raster cells where the species occurs.}
 }
 \value{
-List containing 4 rasters and 3 phylogenies (original, trait-scaled and rate-scaled)
+A raster of the same geometry as \code{template.raster}, giving the number of distinct species recorded in each cell. Cells with no occurrences are NA.
 }
 \description{
 richness_raster
 }
 \examples{
-\dontrun{
-Write example text
-}
+template <- raster::raster(nrows = 10, ncols = 10)
+
+richness <- richness_raster(template.raster = template,
+                            occurrences = example_occurrences)
+
+summary(raster::values(richness))
 }

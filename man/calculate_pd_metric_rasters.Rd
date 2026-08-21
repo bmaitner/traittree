@@ -42,7 +42,25 @@ calculate_pd_metric_rasters
 The time-based metrics do not depend on the traits, so they are computed once and are unaffected by \code{n_trees}.
 }
 \examples{
-\dontrun{
-Write example text
-}
+template <- raster::raster(nrows = 10, ncols = 10)
+
+# Point estimate: one trait-scaled phylogeny
+result <- calculate_pd_metric_rasters(occurrences = example_occurrences,
+                                      phylogeny = example_tree,
+                                      traits = example_traits,
+                                      template.raster = template)
+
+names(result$pd_stack)
+
+# Carry the reconstruction uncertainty into the metrics instead
+sampled <- calculate_pd_metric_rasters(occurrences = example_occurrences,
+                                       phylogeny = example_tree,
+                                       traits = example_traits,
+                                       template.raster = template,
+                                       n_trees = 10)
+
+names(sampled$pd_stack)
+
+# The spread across trees is the uncertainty in trait-based PD
+summary(raster::values(sampled$pd_stack[["pd_traits_sd"]]))
 }
