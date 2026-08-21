@@ -11,9 +11,28 @@
 #' @param verbose Logical. If TRUE, report progress while querying cells. Defaults to FALSE.
 #' @return A list with \code{pd_stack}, \code{time_phylo}, \code{trait_phylo} and \code{rate_phylo}. With a single trait-scaled phylogeny, \code{pd_stack} holds \code{pd_time}, \code{pdi_time}, \code{pd_traits} and \code{pdi_traits}. With several, the trait-based layers are replaced by their mean, standard deviation and the two requested quantiles across trees, and \code{trait_phylo} is the multiPhylo that produced them.
 #' @note The time-based metrics do not depend on the traits, so they are computed once and are unaffected by \code{n_trees}.
-#' @examples \dontrun{
-#' Write example text
-#' }
+#' @examples
+#' template <- raster::raster(nrows = 10, ncols = 10)
+#'
+#' # Point estimate: one trait-scaled phylogeny
+#' result <- calculate_pd_metric_rasters(occurrences = example_occurrences,
+#'                                       phylogeny = example_tree,
+#'                                       traits = example_traits,
+#'                                       template.raster = template)
+#'
+#' names(result$pd_stack)
+#'
+#' # Carry the reconstruction uncertainty into the metrics instead
+#' sampled <- calculate_pd_metric_rasters(occurrences = example_occurrences,
+#'                                        phylogeny = example_tree,
+#'                                        traits = example_traits,
+#'                                        template.raster = template,
+#'                                        n_trees = 10)
+#'
+#' names(sampled$pd_stack)
+#'
+#' # The spread across trees is the uncertainty in trait-based PD
+#' summary(raster::values(sampled$pd_stack[["pd_traits_sd"]]))
 #' @export
 #' @import raster
 #' @import PhyloMeasures

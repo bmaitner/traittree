@@ -4,9 +4,14 @@
 #' @param occurrences A set of occurrences in "tidy" format: first column is species name, second is raster cells where the species occurs.
 #' @param phylogeny A phylogeny with time-scaled branch lengths
 #' @return List the pruned phylogeny and occurrences data
-#' @examples \dontrun{
-#' Write example text
-#' }
+#' @examples
+#' matched <- data_matching(phylogeny = example_tree,
+#'                          occurrences = example_occurrences)
+#'
+#' # Species without occurrences are dropped from the tree, and occurrences of
+#' # species absent from the tree are dropped from the table.
+#' length(matched$phylogeny$tip.label)
+#' nrow(matched$occurrences)
 #' @export
 #' @importFrom  "ape" "drop.tip"
 data_matching<-function(phylogeny,occurrences){

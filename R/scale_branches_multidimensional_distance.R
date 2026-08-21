@@ -75,9 +75,31 @@ edge_distances_from_node_values <- function(tree,
 #' @param pheno_error Logical, or NULL (the default). Controls whether ancestral state reconstruction estimates a within-species (phenotypic) error term. When NULL, the setting is taken from the data: TRUE if at least one species has two or more observations of at least one trait, and FALSE otherwise. Supply TRUE or FALSE to override. Note that this reproduces the results of the Rphylopars defaults rather than changing them: with a single observation per species phylopars() fits no within-species term regardless of the setting. It matters for replicated data, where the two choices give substantially different reconstructions, and a warning is issued if replication is too sparse to be clearly intentional.
 #' @return phylo formate phylogeny
 #' @note This function DOES NOT account for uncertainty in estimated ancestral traits.
-#' @examples \dontrun{
-#' Write example text
-#' }
+#' @examples
+#' # Branch lengths become the amount of multivariate trait change along each
+#' # branch, rather than elapsed time.
+#' trait_tree <- scale_branches_multidimensional(tree = example_tree,
+#'                                               traits = example_traits)
+#'
+#' plot(example_tree$edge.length, trait_tree$edge.length,
+#'      xlab = "time", ylab = "trait change")
+#'
+#' # Rates of change rather than absolute amounts
+#' rate_tree <- scale_branches_multidimensional(tree = example_tree,
+#'                                              traits = example_traits,
+#'                                              rate = TRUE)
+#'
+#' # The example traits are measured in different units, so by default each is
+#' # divided by its standard deviation before distances are taken.  Using them
+#' # as supplied warns, because one trait would dominate:
+#' raw_tree <- try(scale_branches_multidimensional(tree = example_tree,
+#'                                                 traits = example_traits,
+#'                                                 scale_traits = FALSE))
+#'
+#' # Weight the traits explicitly instead
+#' weighted_tree <- scale_branches_multidimensional(tree = example_tree,
+#'                                                  traits = example_traits,
+#'                                                  weights = c(2, 1, 1))
 #' @export
 #' @import Rphylopars
 scale_branches_multidimensional <- function(tree,

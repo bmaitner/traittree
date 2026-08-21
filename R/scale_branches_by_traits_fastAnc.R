@@ -5,9 +5,16 @@
 #' @param traits a set of trait data where the first column is species name and additional columns are trait data
 #' @param percent If TRUE, branch lengths returned will reflect percent change, rather than absolute amount of change.
 #' @return phylo formate phylogeny
-#' @examples \dontrun{
-#' Write example text
-#' }
+#' @examples
+#' # This function takes a single trait, as a vector named by species
+#' body_mass <- example_traits$body_mass_g
+#' names(body_mass) <- example_traits$species
+#'
+#' mass_tree <- scale_branches_by_traits_fastAnc(tree = example_tree,
+#'                                               traits = body_mass)
+#'
+#' plot(example_tree$edge.length, mass_tree$edge.length,
+#'      xlab = "time", ylab = "change in body mass")
 #' @export
 #' @importFrom  "ape" "drop.tip"
 #' @import phytools
