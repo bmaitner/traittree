@@ -1,5 +1,29 @@
 # traittree 0.0.0.9000
 
+## New features
+
+* `blend_distances()` and `tune_blend_weight()` add the other route to combining
+  trait and phylogenetic information: rather than rescaling branch lengths, they
+  mix a phylogenetic distance matrix with a trait distance matrix, following the
+  functional-phylogenetic distance of Cadotte, Albert and Walker (2013). Which
+  route is preferable depends on the question. Blending returns a distance
+  matrix, so phylogenetic diversity and evolutionary distinctiveness are not
+  defined on its output, whereas `scale_branches_multidimensional()` returns a
+  phylogeny; but blending can describe a species' distinctiveness better when
+  trait coverage is partial. A trait-scaled tree often makes a better
+  phylogenetic component than a dated one, so the two functions compose.
+
+* `tune_blend_weight()` estimates the blending weight from the data. The weight
+  has no default and no established estimator in the literature, where the
+  convention is to compute the blend across the whole range and read the curve
+  as a diagnostic. Each measured trait is held out in turn and the weight chosen
+  to reproduce its distance structure from the remaining traits and the
+  phylogeny, on the reasoning that held-out measured traits stand in for the
+  trait axes that were never measured. Inspect `mean_score`: when nothing
+  predicts the held-out trait the curve is flat and the returned weight is
+  arbitrary rather than estimated.
+
+
 ## Breaking changes
 
 * `scale_branches_multidimensional()` and
