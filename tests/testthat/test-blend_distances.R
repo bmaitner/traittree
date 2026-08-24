@@ -159,3 +159,125 @@ test_that("both fold criteria run and return comparable structures", {
   expect_equal(dim(mantel$fold_scores), dim(unique$fold_scores))
 
 })
+
+test_that("p is validated: Inf is rejected and p < 1 warns", {
+
+  set.seed(9)
+  tree <- ape::rtree(15)
+  traits <- matrix(stats::rnorm(30), nrow = 15,
+                   dimnames = list(tree$tip.label, c("t1", "t2")))
+
+  # the Chebyshev limit is a component-wise maximum in which `a` drops out, and
+  # the p-norm expression evaluates the zero diagonal as 0^0, so it silently
+  # returned a matrix of ones
+  expect_error(blend_distances(tree, traits, a = 0.5, p = Inf), "finite")
+  expect_error(blend_distances(tree, traits, a = 0.5, p = 0))
+  expect_error(tune_blend_weight(tree, traits, p = Inf), "finite")
+
+  # allowed, since it scored well in testing, but no longer a metric
+  expect_warning(blend_distances(tree, traits, a = 0.5, p = 0.5),
+                 "triangle inequality")
+
+})
+
+test_that("a_grid is validated, and a single candidate is allowed", {
+
+  set.seed(10)
+  tree <- ape::rtree(20)
+  traits <- matrix(stats::rnorm(60), nrow = 20,
+                   dimnames = list(tree$tip.label, c("t1", "t2", "t3")))
+
+  expect_error(tune_blend_weight(tree, traits, a_grid = numeric(0)), "non-empty")
+  expect_error(tune_blend_weight(tree, traits, a_grid = c(0.5, 1.5)), "between 0 and 1")
+  expect_error(tune_blend_weight(tree, traits, a_grid = c(0.5, NA)), "between 0 and 1")
+
+  # a one-point grid used to reach rowMeans() with a vector rather than a matrix
+  fit <- tune_blend_weight(tree, traits, a_grid = 0.5)
+
+  expect_equal(fit$a, 0.5)
+  expect_equal(dim(fit$fold_scores), c(1L, ncol(traits)))
+
+})
+
+test_that("inputs with no variation stay usable instead of becoming NaN", {
+
+  set.seed(11)
+  tree <- ape::rtree(12)
+  traits <- matrix(stats::rnorm(24), nrow = 12,
+                   dimnames = list(tree$tip.label, c("t1", "t2")))
+
+  constant <- matrix(1, nrow = 12, ncol = 2,
+                     dimnames = list(tree$tip.label, c("t1", "t2")))
+  flat_tree <- tree
+  flat_tree$edge.length <- rep(0, nrow(tree$edge))
+
+  # dividing by a zero maximum turned the whole blend into NaN, including at the
+  # endpoints where the degenerate input carries no weight at all
+  expect_true(all(is.finite(blend_distances(tree, constant, a = 1))))
+  expect_true(all(is.finite(blend_distances(flat_tree, traits, a = 0))))
+
+  # a constant held-out trait scores NA for its own fold, quietly, and the
+  # remaining folds still decide the weight
+  part_constant <- cbind(traits, t3 = 1)
+  fit <- expect_silent(tune_blend_weight(tree, part_constant,
+                                         a_grid = seq(0, 1, by = 0.25)))
+
+  expect_true(all(is.na(fit$fold_scores[, "t3"])))
+  expect_true(is.finite(fit$a))
+
+})
+
+test_that("a square trait table is not mistaken for a distance matrix", {
+
+  set.seed(12)
+  tree <- ape::rtree(4)
+
+  # square and symmetric, but neither zero on the diagonal nor a distance matrix
+  square_traits <- matrix(c(3, 1, 2, 4,
+                            1, 5, 6, 2,
+                            2, 6, 7, 1,
+                            4, 2, 1, 8), nrow = 4, byrow = TRUE,
+                          dimnames = list(tree$tip.label, paste0("t", 1:4)))
+
+  expect_equal(blend_distances(tree, square_traits, a = 0),
+               local({
+                 trait <- as.matrix(stats::dist(square_traits))
+                 (trait / max(trait))[tree$tip.label, tree$tip.label]
+               }))
+
+})
+
+test_that("a distance matrix named on one margin only is accepted", {
+
+  set.seed(13)
+  tree <- ape::rtree(10)
+  traits <- matrix(stats::rnorm(20), nrow = 10,
+                   dimnames = list(tree$tip.label, c("t1", "t2")))
+
+  phylo <- ape::cophenetic.phylo(tree)
+  colnames(phylo) <- NULL
+
+  expect_equal(blend_distances(phylo, traits, a = 0.5),
+               blend_distances(tree, traits, a = 0.5))
+
+  unnamed <- unname(ape::cophenetic.phylo(tree))
+  expect_error(blend_distances(unnamed, traits, a = 0.5), "species names")
+
+})
+
+test_that("the returned plateau brackets the chosen weight", {
+
+  set.seed(14)
+  tree <- ape::rtree(60)
+  structured <- replicate(n = 3,
+                          expr = ape::rTraitCont(phy = tree, model = "BM"))
+  row.names(structured) <- tree$tip.label
+
+  fit <- tune_blend_weight(tree, structured, a_grid = seq(0, 1, by = 0.1))
+
+  expect_length(fit$a_plateau, 2)
+  expect_lte(fit$a_plateau[1], fit$a)
+  expect_gte(fit$a_plateau[2], fit$a)
+  expect_length(fit$standard_error, length(fit$a_grid))
+
+})

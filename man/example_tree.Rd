@@ -20,6 +20,6 @@ quickly and reproducibly, and should not be used for anything else. The code
 that produced them is in \code{data-raw/generate_example_data.R}.
 }
 \seealso{
-[example_traits], [example_occurrences]
+\link{example_traits}, \link{example_occurrences}
 }
 \keyword{datasets}

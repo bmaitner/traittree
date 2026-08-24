@@ -7,15 +7,15 @@
 \format{
 A data frame with 375 rows and 2 columns:
 \describe{
-  \item{species}{Species name, matching the tip labels of [example_tree].}
-  \item{cell}{Raster cell number the species occurs in.}
+\item{species}{Species name, matching the tip labels of \link{example_tree}.}
+\item{cell}{Raster cell number the species occurs in.}
 }
 }
 \usage{
 example_occurrences
 }
 \description{
-Occurrences of the 60 species in [example_tree] across a 10 by 10 grid, in the
+Occurrences of the 60 species in \link{example_tree} across a 10 by 10 grid, in the
 "tidy" format the package's spatial functions expect: one row per species per
 occupied cell. Species occupy clustered sets of cells rather than being
 scattered uniformly.
@@ -27,6 +27,6 @@ examples build with \code{raster::raster(nrows = 10, ncols = 10)}.
 The data are simulated, not observed.
 }
 \seealso{
-[example_tree], [example_traits]
+\link{example_tree}, \link{example_traits}
 }
 \keyword{datasets}

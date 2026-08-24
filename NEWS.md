@@ -10,8 +10,11 @@
   matrix, so phylogenetic diversity and evolutionary distinctiveness are not
   defined on its output, whereas `scale_branches_multidimensional()` returns a
   phylogeny; but blending can describe a species' distinctiveness better when
-  trait coverage is partial. A trait-scaled tree often makes a better
-  phylogenetic component than a dated one, so the two functions compose.
+  trait coverage is partial. Which route wins turns out to depend on the
+  objective rather than on the data: accumulating diversity over a set
+  (complementarity, surrogacy, reserve selection) favoured the trait-scaled
+  tree, while ranking individual species by distinctiveness favoured a blend.
+  `?blend_distances` now says so under "Choosing between the two routes".
 
 * `tune_blend_weight()` estimates the blending weight from the data. The weight
   has no default and no established estimator in the literature, where the
@@ -22,6 +25,53 @@
   trait axes that were never measured. Inspect `mean_score`: when nothing
   predicts the held-out trait the curve is flat and the returned weight is
   arbitrary rather than estimated.
+
+* `tune_blend_weight()` also returns `a_plateau`, the range of weights whose
+  mean score falls within one standard error of the best, and `standard_error`
+  for every candidate. The score curve is usually flat and the returned weight
+  is biased low, so the plateau is a fairer summary of what the folds can
+  actually distinguish than the single best weight is.
+
+* `p` is documented as fixed by design rather than left as an unexamined
+  default. Scoring a grid over `a` and `p` together showed `p` to be weakly
+  identified: performance moved by only 0.04 to 0.07 in correlation across `p`
+  from 0.1 to 5, cross-validation recovered the best `p` in 9% to 55% of
+  subsets, and tuning `p` alongside `a` beat a fixed `p = 2` in about a fifth
+  of them. Values below 1 remain available but now warn, since they break the
+  triangle inequality and so return a dissimilarity rather than a metric.
+
+* Guidance on the trait-scaled tree as the blend's phylogenetic component is
+  now scoped to where it held. It helped in simulation, but on real mammal data
+  the dated tree was the equal or better component at every trait count tried:
+  what a phylogenetic component contributes to a blend is its independence from
+  the measured traits, which rescaling gives up.
+
+
+## Bug fixes
+
+* `blend_distances()` and `tune_blend_weight()` reject `p = Inf` instead of
+  returning a matrix of ones. The p-norm expression evaluated the zero diagonal
+  as `0^0`, and the limit is a component-wise maximum in which `a` has no
+  effect, so it was never the calculation the user asked for.
+
+* An input with no variation, such as a constant trait or a tree with zero
+  branch lengths, no longer turns the whole blend into `NaN`. Scaling by the
+  maximum is skipped when that maximum is zero, so the endpoint blends stay
+  usable and a constant held-out trait simply scores `NA` for its own fold.
+
+* `tune_blend_weight()` accepts a one-point `a_grid`, which previously errored
+  in `rowMeans()`, and rejects an empty or out-of-range grid, which previously
+  returned `numeric(0)` as the chosen weight.
+
+* A square species-by-trait table is no longer mistaken for a distance matrix.
+  Squareness and symmetry alone were enough to skip the conversion to distances;
+  the diagonal must now be zero and the entries non-negative as well. A distance
+  matrix carrying species names on one margin only is named from the other
+  rather than failing when the species are matched.
+
+* Documentation cross-references render as links. The package now sets
+  `Roxygen: list(markdown = TRUE)`, so `[foo()]` references in the blending
+  functions and the example datasets no longer appear as literal brackets.
 
 
 ## Breaking changes
@@ -103,8 +153,16 @@ now vectorised. Measured on simulated data:
 * `scale_branches_by_traits_fastAnc()` also had a quadratic lookup removed,
   though `phytools::fastAnc()` dominates its runtime, so end-to-end timings are
   unchanged.
+* `tune_blend_weight()` is roughly 1.5x faster (400 tips, 5 traits, the default
+  grid). It called `blend_distances()` at every point of the grid, so it
+  re-coerced, re-matched and re-scaled both matrices thousands of times over;
+  the combination step is now shared with `blend_distances()` and the
+  preparation happens once. The chosen weight and the fold scores are
+  unchanged.
 
 ## Other
 
 * `geiger` removed from `Imports`; it was unused.
 * Added a test suite (272 assertions).
+* `vignette("traittree")` gains a section on blending, covering the weight, the
+  plateau, why `p` is fixed, and which of the two routes suits which objective.

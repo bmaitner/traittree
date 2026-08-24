@@ -18,25 +18,29 @@ tune_blend_weight(
 \item{traits}{A species-by-trait matrix or data frame, with species as row
 names.}
 
-\item{a_grid}{Candidate weights to search.}
+\item{a_grid}{Candidate weights to search: a non-empty numeric vector of
+values between 0 and 1.}
 
-\item{p}{The p-norm, passed to [blend_distances()].}
+\item{p}{The p-norm, passed to \code{\link[=blend_distances]{blend_distances()}}.}
 
-\item{method}{The fold criterion.  `"mantel"`, the default, correlates the
+\item{method}{The fold criterion.  \code{"mantel"}, the default, correlates the
 blended distances with the held-out trait's distance matrix across all
-pairs.  `"uniqueness"` instead correlates nearest-neighbour distinctiveness
+pairs.  \code{"uniqueness"} instead correlates nearest-neighbour distinctiveness
 with the held-out trait's nearest-neighbour uniqueness; in one dimension
 that quantity is the gap to the nearest value in a sorted vector, which
-makes it noticeably noisier, and it is retained only for comparison.}
+makes it noticeably noisier, and it is retained only for comparison.  On
+mammals the Mantel criterion matched the best weight in 55\% of subsets
+against 36\% for the other, at a lower cost (0.04 against 0.06).}
 }
 \value{
-A list with the chosen weight `a`, the grid searched, the mean score
-  for each candidate weight, and the per-fold scores.
+A list with the chosen weight \code{a}, the range \code{a_plateau} of weights
+scoring within one standard error of it, the grid searched, the mean score
+and its standard error for each candidate weight, and the per-fold scores.
 }
 \description{
-The weight `a` in [blend_distances()] has no default and no established
+The weight \code{a} in \code{\link[=blend_distances]{blend_distances()}} has no default and no established
 estimator: the usual practice is to compute the blend across the whole range
-of `a` and read the resulting curve as a diagnostic.  That is unhelpful when
+of \code{a} and read the resulting curve as a diagnostic.  That is unhelpful when
 a single value is needed.  This function chooses one from the data by holding
 out each measured trait in turn and taking the weight whose blend best
 reproduces the held-out trait's distance structure from the remaining traits
@@ -46,12 +50,20 @@ describe.
 }
 \details{
 At least two traits are required.  With one, holding it out leaves no trait
-component and `a` has no effect on the result.
+component and \code{a} has no effect on the result.
+}
+\section{How well this works}{
 
-The estimate is stable but tends to sit slightly below the weight that would
-have been best, so it errs towards the traits and away from the phylogeny.
+Tested on mammals against the weight that would have been best for recovering
+the full trait space, the returned weight landed within one grid step of that
+weight in every subset tried and matched it exactly in about half, at a cost
+of 0.04 in correlation.  It is biased low, selecting \code{a = 0} in roughly 85\% of
+subsets where the best weight was usually 0.125, so the penalty for taking the
+argmax at face value is small only because the score curve is flat.  Read
+\code{a_plateau} alongside \code{a}: it reports the range of weights the folds cannot
+distinguish from the best one, and it is usually wide.
 
-Inspect `mean_score` before trusting the returned weight.  The criterion only
+Inspect \code{mean_score} before trusting the returned weight.  The criterion only
 has something to work with when the held-out trait is predictable from the
 remaining traits, the phylogeny, or both.  When it is predictable from
 neither, the score curve is flat and the weight that comes back is arbitrary
@@ -59,13 +71,27 @@ rather than estimated.  A flat curve is itself informative: it says the
 measured traits carry no signal about one another and the tree carries none
 about them.
 }
+
+\section{Why p is fixed rather than tuned}{
+
+The argument that motivates estimating \code{a} would seem to apply to \code{p} as
+well, which is simply set to the convention.  It does not hold up.  Scoring a
+two-dimensional grid over both showed the achievable performance changing by
+only 0.04 to 0.07 in correlation across \code{p} from 0.1 to 5, cross-validation
+recovering the best \code{p} in 9\% to 55\% of subsets depending on the grid, and
+tuning \code{p} alongside \code{a} beating a fixed \code{p = 2} in about a fifth of subsets
+(0.806 against 0.794 on average).  \code{p} is weakly identified, so it is fixed
+and \code{a} alone is tuned.
+}
+
 \examples{
 tree <- ape::rtree(30)
 traits <- matrix(stats::rnorm(90), nrow = 30,
                  dimnames = list(tree$tip.label, c("t1", "t2", "t3")))
 fit <- tune_blend_weight(phylo_dist = tree, traits = traits)
 fit$a
+fit$a_plateau
 }
 \seealso{
-[blend_distances()]
+\code{\link[=blend_distances]{blend_distances()}}
 }
