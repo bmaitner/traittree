@@ -16,7 +16,7 @@ tune_blend_weight(
 \item{phylo_dist}{A phylogeny, or a phylogenetic distance matrix.}
 
 \item{traits}{A species-by-trait matrix or data frame, with species as row
-names.}
+names, each named once.}
 
 \item{a_grid}{Candidate weights to search: a non-empty numeric vector of
 values between 0 and 1.}

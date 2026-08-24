@@ -13,9 +13,13 @@
 #' @noRd
 as_distance_matrix <- function(x, argument = "input"){
 
-  if(inherits(x, "phylo")){ return(ape::cophenetic.phylo(x)) }
+  if(inherits(x, "phylo")){
+    return(check_distance_names(ape::cophenetic.phylo(x), argument))
+  }
 
-  if(inherits(x, "dist")){ return(as.matrix(x)) }
+  if(inherits(x, "dist")){
+    return(check_distance_names(as.matrix(x), argument))
+  }
 
   x <- as.matrix(x)
 
@@ -29,11 +33,11 @@ as_distance_matrix <- function(x, argument = "input"){
     isTRUE(all(diag(x) == 0)) &&
     isTRUE(all(x >= 0))
 
-  if(looks_like_distances){ return(name_both_margins(x, argument)) }
-
-  if(is.null(row.names(x))){
-    stop(argument, " needs species names as row names")
+  if(looks_like_distances){
+    return(check_distance_names(name_both_margins(x, argument), argument))
   }
+
+  check_species_labels(row.names(x), argument)
 
   as.matrix(stats::dist(x))
 
@@ -59,6 +63,70 @@ name_both_margins <- function(x, argument){
   if(is.null(row.names(x))){ row.names(x) <- colnames(x) }
 
   if(is.null(colnames(x))){ colnames(x) <- row.names(x) }
+
+  x
+
+}
+
+##########
+
+#' Check that species names can be matched on
+#'
+#' Internal helper.  Species are matched by name and then used to subset both
+#' margins, and subsetting silently takes the first match for a name that
+#' appears twice, dropping the other species from the blend entirely.  A
+#' duplicate is refused rather than resolved, since which row is the real one is
+#' not something this package can know.
+#'
+#' @param species A character vector of names, or `NULL`.
+#' @param argument The name of the user-facing argument the names came from.
+#' @return `TRUE`, invisibly; called for the error.
+#' @noRd
+check_species_labels <- function(species, argument){
+
+  if(is.null(species)){
+    stop(argument, " needs species names as row names")
+  }
+
+  if(anyNA(species) || !all(nzchar(species))){
+    stop(argument, " has missing or empty species names")
+  }
+
+  repeated <- unique(species[duplicated(species)])
+
+  if(length(repeated) > 0){
+    stop(argument, " names the same species more than once: ",
+         paste(repeated[seq_len(min(5, length(repeated)))], collapse = ", "),
+         if(length(repeated) > 5){ ", ..." })
+  }
+
+  invisible(TRUE)
+
+}
+
+##########
+
+#' Check the names on a square distance matrix
+#'
+#' Internal helper.  Both margins have to carry the same species in the same
+#' order.  Matching by name and then subsetting would otherwise reorder the
+#' columns away from the rows they belong to, and the result of that is not a
+#' distance matrix at all: it comes back asymmetric, with a diagonal that is no
+#' longer zero, and nothing downstream notices.
+#'
+#' @param x A square numeric matrix.
+#' @param argument The name of the user-facing argument `x` came from.
+#' @return `x`, unchanged.
+#' @noRd
+check_distance_names <- function(x, argument){
+
+  check_species_labels(row.names(x), argument)
+
+  if(!identical(row.names(x), colnames(x))){
+    stop(argument, " names different species on its rows and its columns: a ",
+         "distance matrix has to carry the same names, in the same order, on ",
+         "both margins")
+  }
 
   x
 
@@ -224,7 +292,9 @@ blend_matrices <- function(phylo_matrix, trait_matrix, a, p){
 #' @param trait_dist A trait distance matrix, or a species-by-trait matrix, in
 #'   which case Euclidean distances are taken.  A square input is read as
 #'   distances only if it is symmetric, zero on the diagonal and non-negative;
-#'   pass a `dist` object to remove any ambiguity.
+#'   pass a `dist` object to remove any ambiguity.  Either input is rejected if
+#'   it names a species twice, or names different species on its two margins,
+#'   since species are matched by name and both would misalign the blend.
 #' @param a Weight on the phylogenetic component, between 0 (traits only) and
 #'   1 (phylogeny only).  There is no default: see [tune_blend_weight()] for one
 #'   way to choose it.  On mammals and birds the best weight sat at 0.125 to
@@ -329,7 +399,7 @@ blend_distances <- function(phylo_dist,
 #'
 #' @param phylo_dist A phylogeny, or a phylogenetic distance matrix.
 #' @param traits A species-by-trait matrix or data frame, with species as row
-#'   names.
+#'   names, each named once.
 #' @param a_grid Candidate weights to search: a non-empty numeric vector of
 #'   values between 0 and 1.
 #' @param p The p-norm, passed to [blend_distances()].
@@ -371,9 +441,7 @@ tune_blend_weight <- function(phylo_dist,
     stop("tune_blend_weight() needs at least 2 traits; with one, `a` has no effect")
   }
 
-  if(is.null(row.names(trait_values))){
-    stop("traits needs species names as row names")
-  }
+  check_species_labels(row.names(trait_values), "traits")
 
   species <- intersect(row.names(phylo_matrix), row.names(trait_values))
 

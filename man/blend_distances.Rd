@@ -12,7 +12,9 @@ blend_distances(phylo_dist, trait_dist, a, p = 2)
 \item{trait_dist}{A trait distance matrix, or a species-by-trait matrix, in
 which case Euclidean distances are taken.  A square input is read as
 distances only if it is symmetric, zero on the diagonal and non-negative;
-pass a \code{dist} object to remove any ambiguity.}
+pass a \code{dist} object to remove any ambiguity.  Either input is rejected if
+it names a species twice, or names different species on its two margins,
+since species are matched by name and both would misalign the blend.}
 
 \item{a}{Weight on the phylogenetic component, between 0 (traits only) and
 1 (phylogeny only).  There is no default: see \code{\link[=tune_blend_weight]{tune_blend_weight()}} for one
