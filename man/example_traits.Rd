@@ -7,17 +7,17 @@
 \format{
 A data frame with 60 rows and 4 columns:
 \describe{
-  \item{species}{Species name, matching the tip labels of [example_tree].}
-  \item{body_mass_g}{Body mass, in grams.}
-  \item{wing_mm}{Wing length, in millimetres.}
-  \item{bill_mm}{Bill depth, in millimetres.}
+\item{species}{Species name, matching the tip labels of \link{example_tree}.}
+\item{body_mass_g}{Body mass, in grams.}
+\item{wing_mm}{Wing length, in millimetres.}
+\item{bill_mm}{Bill depth, in millimetres.}
 }
 }
 \usage{
 example_traits
 }
 \description{
-Three correlated traits for the 60 species in [example_tree], evolved under
+Three correlated traits for the 60 species in \link{example_tree}, evolved under
 Brownian motion and then placed on plausible measurement scales. The traits
 are deliberately given different units, so that the effect of
 \code{scale_traits} is visible: their standard deviations differ by roughly a
@@ -28,6 +28,6 @@ The data are simulated, not observed. There are no missing values, though the
 package's functions do accept them.
 }
 \seealso{
-[example_tree], [example_occurrences]
+\link{example_tree}, \link{example_occurrences}
 }
 \keyword{datasets}

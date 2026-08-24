@@ -58,7 +58,7 @@ plot(example_tree$edge.length, trait_tree$edge.length,
      pch = 16, col = "#4477aa")
 ```
 
-The relationship is positive — more time generally means more change — but far
+The relationship is positive (more time generally means more change) but far
 from tight, and that scatter is the point of the exercise.
 
 Passing `rate = TRUE` divides by the original branch lengths, giving rates of
@@ -92,7 +92,7 @@ cor(scaled$edge.length, raw$edge.length)
 
 Using the traits as supplied emits a warning naming the traits whose spreads
 differ most, because that choice is rarely deliberate. It is sometimes the right
-one: if your traits are already on a common scale — all log-transformed, say —
+one: if your traits are already on a common scale, all log-transformed, say,
 their relative spread is itself meaningful, and scaling would flatten a real
 difference in evolutionary rate. That is what `scale_traits = FALSE` is for.
 
@@ -151,8 +151,8 @@ scale_branches_multidimensional(example_tree, example_traits, pheno_error = TRUE
 ```
 
 Replicate observations are simply extra rows for the same species. When
-replication is very sparse — a single duplicated row in a large table, which is
-more often a data-entry artifact than a measurement — you get a warning, because
+replication is very sparse (a single duplicated row in a large table, which is
+more often a data-entry artifact than a measurement) you get a warning, because
 that one row would otherwise switch the model silently.
 
 ## From trees to maps
@@ -183,9 +183,9 @@ names(result$pd_stack)
 ```
 
 Passing `n_trees` propagates the reconstruction uncertainty all the way to the
-maps. The time-based layers are unaffected — they do not involve the traits — but
-the trait-based ones are replaced by a mean, a standard deviation, and an
-interval across trees:
+maps. The time-based layers are unaffected, since they do not involve the
+traits, but the trait-based ones are replaced by a mean, a standard deviation,
+and an interval across trees, whose bounds `probs` controls:
 
 ```{r pd_uncertainty}
 sampled <- calculate_pd_metric_rasters(occurrences = example_occurrences,
@@ -204,7 +204,122 @@ of the spatial pattern in trait-based diversity is real, and how much is an
 artifact of not knowing the ancestral states.
 
 If you already have trait-scaled trees in hand, pass them directly with
-`trait_phylo` instead of having them rebuilt.
+`trait_phylo` instead of having them rebuilt, and set `verbose = TRUE` to watch
+the loop over cells.
+
+## The other route: blending distances
+
+Rescaling branch lengths is one way to combine trait and phylogenetic
+information. The other is to leave the tree alone and mix the two distance
+matrices after the fact, following the functional-phylogenetic distance of
+Cadotte, Albert and Walker (2013):
+
+$$FPD = (a P^p + (1 - a) F^p)^{1/p}$$
+
+where $P$ and $F$ are the phylogenetic and trait distances. Each is divided by
+its maximum first, so that $a$ weights the two sources against each other rather
+than against whatever units they happen to be measured in.
+
+```{r blend}
+trait_matrix <- scale(as.matrix(example_traits[, -1]))
+row.names(trait_matrix) <- example_traits$species
+
+blended <- blend_distances(phylo_dist = example_tree,
+                           trait_dist = trait_matrix,
+                           a = 0.25)
+
+round(blended[1:4, 1:4], 2)
+```
+
+The traits are scaled here for the reason given above: a Euclidean distance
+taken across grams and millimetres belongs mostly to whichever trait has the
+bigger numbers. `blend_distances()` will not do it for you, because it accepts a
+ready-made distance matrix just as readily as a trait table, and cannot tell
+which it has been handed. Species are matched by name rather than by position,
+so the two inputs need not be in the same order, and the endpoints recover the
+inputs: `a = 1` is the scaled phylogenetic distance and `a = 0` the scaled trait
+distance.
+
+### Choosing the weight
+
+There is no default for `a`, and no established estimator in the literature,
+where the convention is to compute the blend across the whole range and read the
+curve as a diagnostic. `tune_blend_weight()` chooses one value from the data
+instead. It holds out each measured trait in turn and asks which weight best
+reproduces that trait's distance structure from the remaining traits and the
+phylogeny, on the reasoning that a held-out measured trait stands in for the
+trait axes that were never measured, which are what the blend is trying to
+describe in the first place. At least two traits are needed: with one, holding
+it out leaves no trait component and `a` has no effect.
+
+```{r tune}
+fit <- tune_blend_weight(phylo_dist = example_tree, traits = trait_matrix)
+
+fit$a
+
+fit$a_plateau
+```
+
+```{r tune_curve, fig.alt = "Mean cross-validated score against the weight on the phylogeny"}
+plot(fit$a_grid, fit$mean_score, type = "b", pch = 16, col = "#4477aa",
+     xlab = "weight on the phylogeny (a)", ylab = "mean fold score")
+
+abline(v = fit$a_plateau, lty = 2, col = "grey50")
+```
+
+The traits in the example data were evolved on the example tree, so the
+phylogeny predicts them well and the weight comes back high. The shape of the
+curve matters more than its peak: it climbs steeply out of `a = 0` and then goes
+flat, and the dashed lines mark `a_plateau`, the range of weights whose scores
+sit within one standard error of the best. Here that range covers almost the
+whole grid, which is the honest summary. On real data the single best weight sat
+at 0.125 to 0.25 for mammals and birds, with a curve just as flat across that
+range, and the argmax was biased low. Read the plateau alongside the weight, and
+treat a curve that is flat everywhere as the message it is: nothing in the data
+distinguishes the candidates, because the measured traits carry no signal about
+one another and the tree carries none about them.
+
+`p` is fixed at 2, the convention in Cadotte et al. (2013), and is deliberately
+not tuned. Scoring a grid over both parameters showed the achievable performance
+moving by only 0.04 to 0.07 in correlation across `p` from 0.1 to 5,
+cross-validation recovering the best `p` in 9% to 55% of subsets depending on
+the grid, and tuning `p` alongside `a` beating a fixed `p = 2` in about a fifth
+of them. The weight is worth estimating; the norm is not. Values below 1 are
+accepted but warn, since they break the triangle inequality and so return a
+dissimilarity rather than a metric.
+
+### Which route to use
+
+The objective decides, more than the data do. When the goal is to accumulate
+diversity over a set of species (complementarity, surrogacy, reserve selection),
+a trait-scaled tree did better than a blend in our simulations and on real
+mammal and bird data. When the goal is to rank individual species by how
+distinctive they are (the EDGE and FUSE style of question), the ordering
+reverses and a blend did better, up to about 75% trait coverage, above which the
+measured traits alone are enough.
+
+The two routes also differ in what they return. Blending gives a distance
+matrix, so Faith's PD and fair-proportion evolutionary distinctiveness are not
+defined on its output and `calculate_pd_metric_rasters()` cannot take it, while
+rescaling returns a phylogeny with the original topology. Rescaling is linear in
+tree size and has no parameter to choose; blending needs an $n$ by $n$ matrix
+and a weight. Against all that, a blend uses the measured trait distances
+exactly, where rescaling passes them through an ancestral reconstruction that
+shrinks them.
+
+Nothing stops the phylogenetic component from being a trait-scaled tree:
+
+```{r blend_component}
+alt <- blend_distances(phylo_dist = trait_tree,
+                       trait_dist = trait_matrix,
+                       a = 0.25)
+```
+
+That helped in simulation. It did not help on real mammal data, where the dated
+tree was the equal or better component at every trait count tried. What a
+phylogenetic component contributes to a blend appears to be its independence
+from the measured traits, which rescaling gives up. Worth trying, in other
+words, but not worth assuming.
 
 ## Single traits, one tree at a time
 

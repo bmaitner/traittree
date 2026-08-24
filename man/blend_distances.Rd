@@ -10,14 +10,21 @@ blend_distances(phylo_dist, trait_dist, a, p = 2)
 \item{phylo_dist}{A phylogeny, or a phylogenetic distance matrix.}
 
 \item{trait_dist}{A trait distance matrix, or a species-by-trait matrix, in
-which case Euclidean distances are taken.}
+which case Euclidean distances are taken.  A square input is read as
+distances only if it is symmetric, zero on the diagonal and non-negative;
+pass a \code{dist} object to remove any ambiguity.}
 
 \item{a}{Weight on the phylogenetic component, between 0 (traits only) and
-1 (phylogeny only).  There is no default: see [tune_blend_weight()] for one
-way to choose it.}
+1 (phylogeny only).  There is no default: see \code{\link[=tune_blend_weight]{tune_blend_weight()}} for one
+way to choose it.  On mammals and birds the best weight sat at 0.125 to
+0.25, with a flat score curve across that range, which is a reasonable
+place to start when the data cannot be cross-validated.}
 
 \item{p}{The p-norm.  Defaults to 2, the convention in Cadotte et al. (2013).
-`p = 1` gives a straight linear mixture.}
+\code{p = 1} gives a straight linear mixture.  Fixing \code{p} rather than estimating
+it is deliberate: see \code{\link[=tune_blend_weight]{tune_blend_weight()}}.  Values below 1 are permitted
+but warn, since they break the triangle inequality and so return a
+dissimilarity rather than a metric.}
 }
 \value{
 A square distance matrix over the species shared by the two inputs.
@@ -29,19 +36,38 @@ functional-phylogenetic distance of Cadotte, Albert and Walker (2013),
 \details{
 \deqn{FPD = (a P^p + (1 - a) F^p)^{1/p}}
 
-where `P` and `F` are the phylogenetic and trait distances.  Each is divided
-by its maximum first, so that `a` weights the two sources against each other
+where \code{P} and \code{F} are the phylogenetic and trait distances.  Each is divided
+by its maximum first, so that \code{a} weights the two sources against each other
 rather than against whatever units they happen to be measured in.
 
 This is the alternative to rescaling branch lengths: it combines the two
 sources after the fact and returns a distance matrix, whereas
-[scale_branches_multidimensional()] returns a phylogeny, on which
+\code{\link[=scale_branches_multidimensional]{scale_branches_multidimensional()}} returns a phylogeny, on which
 phylogenetic diversity and evolutionary distinctiveness remain defined.
-Which is preferable depends on the question being asked.  A trait-scaled
-tree is often a better phylogenetic component here than a dated one, so
-passing the output of [scale_branches_multidimensional()] as `phylo_dist` is
-worth trying.
 }
+\section{Choosing between the two routes}{
+
+The objective decides, more than the data do.  When the goal is to accumulate
+diversity over a set of species (complementarity, surrogacy, reserve
+selection), a trait-scaled tree did better than a blend in our simulations
+and on real mammal and bird data.  When the goal is to rank individual
+species by how distinctive they are (the EDGE and FUSE style of question),
+the ordering reverses and a blend did better, up to about 75\% trait coverage,
+above which the measured traits alone are enough.  Blending also needs an
+\eqn{O(n^2)} distance matrix and a weight, where rescaling is linear in tree
+size and has no parameter; against that, a blend uses the measured trait
+distances exactly, where rescaling passes them through an ancestral
+reconstruction that shrinks them.
+
+A trait-scaled tree can be used as the phylogenetic component here, by
+passing the output of \code{\link[=scale_branches_multidimensional]{scale_branches_multidimensional()}} as \code{phylo_dist},
+and that helped in simulation.  It did not help on real mammal data, where
+the dated tree was the equal or better component at every trait count we
+tried.  The value of a phylogenetic component in a blend appears to lie in
+its independence from the measured traits, which rescaling gives up.  Worth
+trying, in other words, but not worth assuming.
+}
+
 \examples{
 tree <- ape::rtree(20)
 traits <- matrix(stats::rnorm(40), nrow = 20,
@@ -50,9 +76,9 @@ blended <- blend_distances(phylo_dist = tree, trait_dist = traits, a = 0.25)
 }
 \references{
 Cadotte, M.W., Albert, C.H. and Walker, S.C. (2013) The ecology
-  of differences: assessing community assembly with trait and evolutionary
-  distances. Ecology Letters 16:1234-1244.
+of differences: assessing community assembly with trait and evolutionary
+distances. Ecology Letters 16:1234-1244.
 }
 \seealso{
-[tune_blend_weight()], [scale_branches_multidimensional()]
+\code{\link[=tune_blend_weight]{tune_blend_weight()}}, \code{\link[=scale_branches_multidimensional]{scale_branches_multidimensional()}}
 }
