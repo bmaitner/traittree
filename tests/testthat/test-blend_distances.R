@@ -281,3 +281,53 @@ test_that("the returned plateau brackets the chosen weight", {
   expect_length(fit$standard_error, length(fit$a_grid))
 
 })
+
+test_that("a distance matrix has to name the same species on both margins", {
+
+  set.seed(15)
+  tree <- ape::rtree(6)
+  traits <- matrix(stats::rnorm(12), nrow = 6,
+                   dimnames = list(tree$tip.label, c("t1", "t2")))
+
+  phylo <- ape::cophenetic.phylo(tree)
+
+  # a different set of names used to fail at the subset, cryptically
+  mismatched <- phylo
+  colnames(mismatched) <- paste0("other", 1:6)
+  expect_error(blend_distances(mismatched, traits, a = 0.5), "both margins")
+
+  # the same names in a different order was worse: species were matched by name,
+  # which reordered the columns away from the rows they belong to, and the blend
+  # came back asymmetric with a non-zero diagonal and no complaint at all
+  permuted <- phylo
+  colnames(permuted) <- rev(row.names(phylo))
+  expect_error(blend_distances(permuted, traits, a = 1), "same order")
+
+})
+
+test_that("a species named twice is refused rather than silently dropped", {
+
+  set.seed(16)
+  tree <- ape::rtree(6)
+  traits <- matrix(stats::rnorm(18), nrow = 6,
+                   dimnames = list(tree$tip.label, c("t1", "t2", "t3")))
+
+  # subsetting by name takes the first match, so a repeated name quietly threw
+  # the other species out of the blend
+  repeated_traits <- traits
+  row.names(repeated_traits)[2] <- row.names(repeated_traits)[1]
+
+  expect_error(blend_distances(tree, repeated_traits, a = 0.5), "more than once")
+  expect_error(tune_blend_weight(tree, repeated_traits), "more than once")
+
+  phylo <- ape::cophenetic.phylo(tree)
+  dimnames(phylo) <- list(row.names(repeated_traits), row.names(repeated_traits))
+
+  expect_error(blend_distances(phylo, traits, a = 0.5), "more than once")
+
+  # and names that are missing outright, rather than repeated
+  blank <- traits
+  row.names(blank)[3] <- NA
+  expect_error(blend_distances(tree, blank, a = 0.5), "missing or empty")
+
+})

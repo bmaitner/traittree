@@ -63,6 +63,14 @@
   in `rowMeans()`, and rejects an empty or out-of-range grid, which previously
   returned `numeric(0)` as the chosen weight.
 
+* Species names on a distance matrix are checked before they are matched on.
+  Both margins must name the same species in the same order: the same names in
+  a different order used to pass, and matching by name then reordered the
+  columns away from the rows they belong to, returning an asymmetric "distance"
+  matrix with a non-zero diagonal and no complaint. A species named twice is
+  refused as well, since subsetting by name silently kept the first row and
+  dropped the other species from the blend.
+
 * A square species-by-trait table is no longer mistaken for a distance matrix.
   Squareness and symmetry alone were enough to skip the conversion to distances;
   the diagonal must now be zero and the entries non-negative as well. A distance
