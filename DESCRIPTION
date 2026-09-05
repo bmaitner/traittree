@@ -21,4 +21,6 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
+Remotes: 
+    PhyloMeasures=url::https://cran.r-project.org/src/contrib/Archive/PhyloMeasures/PhyloMeasures_2.1.tar.gz
 Config/testthat/edition: 3
