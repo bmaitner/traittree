@@ -1,5 +1,9 @@
 # traittree
 
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/bmaitner/traittree/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/bmaitner/traittree/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
+
 Re-scale phylogenies from units of time into units of phenotypic change.
 
 A time-scaled phylogeny measures branches in millions of years. For many
@@ -16,6 +20,13 @@ rasters).
 # install.packages("remotes")
 remotes::install_github("bmaitner/traittree")
 ```
+
+One dependency needs a note. `PhyloMeasures`, used for the phylogenetic
+diversity metrics, was archived from CRAN, so it cannot be installed from the
+repositories in the usual way. `DESCRIPTION` points at the archived source, and
+`remotes` will pick it up automatically, but it is compiled from source: you
+will need the usual build tools (Rtools on Windows, Xcode command line tools on
+macOS).
 
 ## What it does
 

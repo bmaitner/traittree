@@ -33,6 +33,10 @@ test_that("phylopars() fills in missing tip values, so the branch-length step se
 test_that("vectorized assignment beats the edge-at-a-time loop on complete data", {
 
   skip_on_cran()
+  # Wall-clock assertions are not reliable on a shared CI runner, where another
+  # job can stall this one mid-measurement.  These guard against a regression to
+  # quadratic behaviour locally; correctness is covered elsewhere.
+  skip_on_ci()
 
   sim <- simulate_traits(n_tips = 200, seed = 8)
 
@@ -52,6 +56,10 @@ test_that("vectorized assignment beats the edge-at-a-time loop on complete data"
 test_that("vectorized assignment beats the edge-at-a-time loop on incomplete data", {
 
   skip_on_cran()
+  # Wall-clock assertions are not reliable on a shared CI runner, where another
+  # job can stall this one mid-measurement.  These guard against a regression to
+  # quadratic behaviour locally; correctness is covered elsewhere.
+  skip_on_ci()
 
   sim <- simulate_traits(n_tips = 200, seed = 8)
 
@@ -73,6 +81,10 @@ test_that("vectorized assignment beats the edge-at-a-time loop on incomplete dat
 test_that("the vectorized assignment does not scale quadratically with tree size", {
 
   skip_on_cran()
+  # Wall-clock assertions are not reliable on a shared CI runner, where another
+  # job can stall this one mid-measurement.  These guard against a regression to
+  # quadratic behaviour locally; correctness is covered elsewhere.
+  skip_on_ci()
 
   small <- simulate_traits(n_tips = 250, seed = 9)
   large <- simulate_traits(n_tips = 1000, seed = 9)
