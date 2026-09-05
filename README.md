@@ -17,16 +17,27 @@ rasters).
 ## Installation
 
 ```r
-# install.packages("remotes")
-remotes::install_github("bmaitner/traittree")
+# install.packages("pak")
+pak::pak("bmaitner/traittree")
 ```
 
 One dependency needs a note. `PhyloMeasures`, used for the phylogenetic
 diversity metrics, was archived from CRAN, so it cannot be installed from the
-repositories in the usual way. `DESCRIPTION` points at the archived source, and
-`remotes` will pick it up automatically, but it is compiled from source: you
-will need the usual build tools (Rtools on Windows, Xcode command line tools on
-macOS).
+repositories in the usual way. `DESCRIPTION` points at the archived source under
+`Remotes:`, which `pak` resolves automatically. It is compiled from source, so
+you will need the usual build tools (Rtools on Windows, Xcode command line tools
+on macOS).
+
+`remotes` reads that field differently and will not resolve it, so install the
+dependency first if you prefer `remotes`:
+
+```r
+# install.packages("remotes")
+remotes::install_url(
+  "https://cran.r-project.org/src/contrib/Archive/PhyloMeasures/PhyloMeasures_2.1.tar.gz"
+)
+remotes::install_github("bmaitner/traittree")
+```
 
 ## What it does
 
