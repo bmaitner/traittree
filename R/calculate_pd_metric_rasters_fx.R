@@ -11,7 +11,8 @@
 #' @param verbose Logical. If TRUE, report progress while querying cells. Defaults to FALSE.
 #' @return A list with \code{pd_stack}, \code{time_phylo}, \code{trait_phylo} and \code{rate_phylo}. With a single trait-scaled phylogeny, \code{pd_stack} holds \code{pd_time}, \code{pdi_time}, \code{pd_traits} and \code{pdi_traits}. With several, the trait-based layers are replaced by their mean, standard deviation and the two requested quantiles across trees, and \code{trait_phylo} is the multiPhylo that produced them.
 #' @note The time-based metrics do not depend on the traits, so they are computed once and are unaffected by \code{n_trees}.
-#' @examples
+#' @note Requires the suggested package \code{PhyloMeasures}, which provides the diversity queries. It was archived from CRAN and has to be installed from the archive; see the README.
+#' @examplesIf requireNamespace("PhyloMeasures", quietly = TRUE)
 #' template <- raster::raster(nrows = 10, ncols = 10)
 #'
 #' # Point estimate: one trait-scaled phylogeny
@@ -35,7 +36,6 @@
 #' summary(raster::values(sampled$pd_stack[["pd_traits_sd"]]))
 #' @export
 #' @import raster
-#' @import PhyloMeasures
 calculate_pd_metric_rasters<-function(occurrences,
                                       phylogeny,
                                       traits=NULL,
@@ -67,6 +67,35 @@ calculate_pd_metric_rasters<-function(occurrences,
 
   }
 
+  #A supplied trait_phylo is validated here, with the other arguments, rather
+  #than where it is used, so that a bad call reports the bad argument whether or
+  #not the optional PhyloMeasures happens to be installed.
+  if(!is.null(trait_phylo)){
+
+    if(n_trees != 1){
+
+      stop("n_trees applies only when the phylogeny is scaled here; ",
+           "trait_phylo already fixes the trees to use.", call. = FALSE)
+
+    }
+
+    supplied_trees<-if(inherits(trait_phylo,"phylo")) list(trait_phylo) else unclass(trait_phylo)
+
+    if(!is.list(supplied_trees) || length(supplied_trees) == 0 ||
+       !all(vapply(supplied_trees,inherits,logical(1),"phylo"))){
+
+      stop("trait_phylo must be a phylo object or a multiPhylo of them.", call. = FALSE)
+
+    }
+
+  }
+
+  #The phylogenetic diversity queries come from PhyloMeasures, a suggested
+  #dependency.  Checked after every argument, so a bad call reports the bad
+  #argument either way, and before the reconstruction work, so it does not fail
+  #half way through.
+  require_phylomeasures()
+
   #1) obtain the trait-scaled phylogenies
 
   if(is.null(trait_phylo)){
@@ -83,32 +112,13 @@ calculate_pd_metric_rasters<-function(occurrences,
                                                                   traits = traits,
                                                                   n_trees = n_trees)
 
+      trait_trees<-unclass(trait_trees)
+
     }
 
   }else{
 
-    if(n_trees != 1){
-
-      stop("n_trees applies only when the phylogeny is scaled here; ",
-           "trait_phylo already fixes the trees to use.", call. = FALSE)
-
-    }
-
-    trait_trees<-trait_phylo
-
-  }
-
-  if(inherits(trait_trees,"phylo")){
-
-    trait_trees<-list(trait_trees)
-
-  }
-
-  trait_trees<-unclass(trait_trees)
-
-  if(length(trait_trees) == 0 || !all(vapply(trait_trees,inherits,logical(1),"phylo"))){
-
-    stop("trait_phylo must be a phylo object or a multiPhylo of them.", call. = FALSE)
+    trait_trees<-supplied_trees
 
   }
 

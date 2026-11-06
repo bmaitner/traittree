@@ -12,15 +12,13 @@ Imports:
     ape,
     Rphylopars,
     stats,
-    PhyloMeasures,
     phytools
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Suggests: 
     testthat (>= 3.0.0),
     knitr,
-    rmarkdown
+    rmarkdown,
+    PhyloMeasures
 VignetteBuilder: knitr
-Remotes: 
-    PhyloMeasures=url::https://cran.r-project.org/src/contrib/Archive/PhyloMeasures/PhyloMeasures_2.1.tar.gz
 Config/testthat/edition: 3

@@ -20,6 +20,7 @@ simulate_occurrences <- function(n_tips = 40, n_cells = 60, n_records = 300, see
 test_that("batched pd/pdi rasters match the original cell-by-cell implementation", {
 
   skip_on_cran()
+  skip_if_not_installed("PhyloMeasures")
 
   fixture <- simulate_occurrences()
 
@@ -64,6 +65,7 @@ test_that("batched pd/pdi rasters match the original cell-by-cell implementation
 test_that("cells with fewer than two records stay NA, and empty cells stay NA", {
 
   skip_on_cran()
+  skip_if_not_installed("PhyloMeasures")
 
   fixture <- simulate_occurrences(n_records = 80, n_cells = 60)
 
@@ -96,6 +98,7 @@ test_that("cells with fewer than two records stay NA, and empty cells stay NA", 
 test_that("verbose reports progress and is silent by default", {
 
   skip_on_cran()
+  skip_if_not_installed("PhyloMeasures")
 
   fixture <- simulate_occurrences(n_tips = 20, n_cells = 20, n_records = 100)
 
@@ -118,6 +121,7 @@ test_that("verbose reports progress and is silent by default", {
 test_that("n_trees > 1 replaces the trait layers with a summary across trees", {
 
   skip_on_cran()
+  skip_if_not_installed("PhyloMeasures")
 
   fixture <- simulate_occurrences()
 
@@ -155,6 +159,7 @@ test_that("n_trees > 1 replaces the trait layers with a summary across trees", {
 test_that("the summary layers are internally consistent and carry real spread", {
 
   skip_on_cran()
+  skip_if_not_installed("PhyloMeasures")
 
   fixture <- simulate_occurrences()
 
@@ -194,6 +199,7 @@ test_that("the summary layers are internally consistent and carry real spread", 
 test_that("probs controls the quantiles reported", {
 
   skip_on_cran()
+  skip_if_not_installed("PhyloMeasures")
 
   fixture <- simulate_occurrences()
 
@@ -219,6 +225,7 @@ test_that("probs controls the quantiles reported", {
 test_that("an already scaled phylogeny can be supplied instead of traits", {
 
   skip_on_cran()
+  skip_if_not_installed("PhyloMeasures")
 
   fixture <- simulate_occurrences()
 

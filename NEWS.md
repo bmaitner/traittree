@@ -1,5 +1,22 @@
 # traittree 0.0.0.9000
 
+## Installation
+
+* `PhyloMeasures` moved from `Imports` to `Suggests`. It was archived from CRAN
+  in 2022 and has to be built from the archive, which previously made the whole
+  package uninstallable for anyone who did not already have it. Only
+  `calculate_pd_metric_rasters()` needs it; everything else installs and runs
+  without it, and that function reports how to install it if called without.
+
+* `DESCRIPTION` no longer carries a `Remotes:` field. `pak` and `remotes` spell
+  that field incompatibly — `pak` requires a `PhyloMeasures=url::` prefix and
+  `remotes` reads the prefix as part of the remote type — so no single spelling
+  worked for both. The archive URL now lives in the GitHub Actions workflow,
+  which is the only place that needs it, leaving `DESCRIPTION` standard.
+
+* `misc/` is build-ignored, so `misc/code_for_dev.R` is no longer shipped inside
+  locally built tarballs, and a stale build artifact is no longer tracked.
+
 ## New features
 
 * `blend_distances()` and `tune_blend_weight()` add the other route to combining

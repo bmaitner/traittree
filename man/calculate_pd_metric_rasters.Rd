@@ -40,8 +40,11 @@ calculate_pd_metric_rasters
 }
 \note{
 The time-based metrics do not depend on the traits, so they are computed once and are unaffected by \code{n_trees}.
+
+Requires the suggested package \code{PhyloMeasures}, which provides the diversity queries. It was archived from CRAN and has to be installed from the archive; see the README.
 }
 \examples{
+\dontshow{if (requireNamespace("PhyloMeasures", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 template <- raster::raster(nrows = 10, ncols = 10)
 
 # Point estimate: one trait-scaled phylogeny
@@ -63,4 +66,5 @@ names(sampled$pd_stack)
 
 # The spread across trees is the uncertainty in trait-based PD
 summary(raster::values(sampled$pd_stack[["pd_traits_sd"]]))
+\dontshow{\}) # examplesIf}
 }
