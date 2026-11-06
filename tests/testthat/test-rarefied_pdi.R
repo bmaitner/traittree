@@ -19,11 +19,11 @@ test_that("the closed form equals the average over every possible rarefaction", 
 
     species <- sample(tree$tip.label, richness)
 
-    ours <- phylo_diversity(list(tree), rep(1, richness), species, 1, rarefy_to = target)
+    ours <- pd_by_community(list(tree), rep(1, richness), species, 1, rarefy_to = target)
 
     subsets <- utils::combn(species, target)
 
-    every_rarefaction <- phylo_diversity(list(tree),
+    every_rarefaction <- pd_by_community(list(tree),
                                          rep(seq_len(ncol(subsets)), each = target),
                                          as.vector(subsets),
                                          ncol(subsets))
@@ -45,11 +45,11 @@ test_that("the same holds on a tree with polytomies and zero-length branches", {
   set.seed(52)
   species <- sample(tree$tip.label, 8)
 
-  ours <- phylo_diversity(list(tree), rep(1, 8), species, 1, rarefy_to = 4)
+  ours <- pd_by_community(list(tree), rep(1, 8), species, 1, rarefy_to = 4)
 
   subsets <- utils::combn(species, 4)
 
-  every_rarefaction <- phylo_diversity(list(tree),
+  every_rarefaction <- pd_by_community(list(tree),
                                        rep(seq_len(ncol(subsets)), each = 4),
                                        as.vector(subsets),
                                        ncol(subsets))
@@ -62,7 +62,7 @@ test_that("a community already at the target is unchanged, and a smaller one is 
 
   tree <- reference$ultrametric$tree
 
-  result <- phylo_diversity(list(tree),
+  result <- pd_by_community(list(tree),
                             community = rep(1:3, c(6, 3, 12)),
                             species = c(tree$tip.label[1:6], tree$tip.label[10:12], tree$tip.label[20:31]),
                             n_communities = 3,
@@ -81,7 +81,7 @@ test_that("a community already at the target is unchanged, and a smaller one is 
   expect_lt(result$rarefied_pd[3, 1], result$pd[3, 1])
 
   # the plain values do not depend on whether rarefaction was requested
-  plain <- phylo_diversity(list(tree),
+  plain <- pd_by_community(list(tree),
                            community = rep(1:3, c(6, 3, 12)),
                            species = c(tree$tip.label[1:6], tree$tip.label[10:12], tree$tip.label[20:31]),
                            n_communities = 3)
@@ -109,12 +109,12 @@ test_that("rarefied values agree whether trees are measured together or apart", 
   community <- rep(seq_along(sizes), sizes)
   species <- unlist(lapply(sizes, function(k) sample(tree$tip.label, k)))
 
-  together <- phylo_diversity(variants, community, species, length(sizes), rarefy_to = 5)
+  together <- pd_by_community(variants, community, species, length(sizes), rarefy_to = 5)
 
   # a tree laid out differently goes down the one-at-a-time path
   reordered <- ape::reorder.phylo(variants[[2]], order = "postorder")
 
-  mixed <- phylo_diversity(list(variants[[1]], reordered), community, species,
+  mixed <- pd_by_community(list(variants[[1]], reordered), community, species,
                            length(sizes), rarefy_to = 5)
 
   expect_equal(mixed$rarefied_pdi[, 1], together$rarefied_pdi[, 1], tolerance = 1e-9)
@@ -161,7 +161,7 @@ test_that("rarefaction removes the richness-dependence Sandel (2018) describes",
                        species <- unlist(lapply(richness,
                                                 function(k) sample(tree$tip.label, k, prob = suitability)))
 
-                       result <- phylo_diversity(list(tree), community, species,
+                       result <- pd_by_community(list(tree), community, species,
                                                  length(richness), rarefy_to = min(levels))
 
                        plain <- tapply(result$pdi[, 1], richness, mean)

@@ -26,6 +26,17 @@
 
 ## New features
 
+* `phylo_diversity()` computes Faith's phylogenetic diversity and its
+  standardized index for any set of communities, given either as a matrix of
+  communities by species or as a table of occurrences. `phylo_diversity_moments()`
+  returns the null mean and standard deviation the index is built from, which
+  as a function of richness is the rarefaction curve of phylogenetic diversity.
+  Both use exact formulas rather than randomization, accept several
+  phylogenies at once, and are the calculations behind
+  `calculate_pd_metric_rasters()`. They give the values `pd.query()` and
+  `pd.moments()` gave in the now-archived PhyloMeasures, under its uniform null
+  model.
+
 * `calculate_pd_metric_rasters()` gains `rarefy_to`, which adds a phylogenetic
   diversity index free of its dependence on species richness. The usual index
   guarantees only that randomly assembled cells score zero: under the same

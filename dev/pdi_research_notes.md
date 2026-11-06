@@ -144,6 +144,12 @@ rounding error.
   development version number, `PhyloMeasures` not in a mainstream repository,
   the Title not in title case, and the Description opening with "This package".
 
+## Where it ended up
+
+The internals are in `R/pd_internals.R`; `phylo_diversity()` and
+`phylo_diversity_moments()` in `R/phylo_diversity.R` are the exported interface;
+`calculate_pd_metric_rasters()` calls the internals directly.
+
 ## Licence
 
 PhyloMeasures is GPL-3 and traittree is MIT, so its code cannot be translated

@@ -67,7 +67,7 @@ test_that("PD matches PhyloMeasures on every reference tree", {
     case <- reference[[name]]
     input <- long_form(case$communities)
 
-    result <- phylo_diversity(trees = list(case$tree),
+    result <- pd_by_community(trees = list(case$tree),
                               community = input$community,
                               species = input$species,
                               n_communities = input$n)
@@ -115,7 +115,7 @@ test_that("PDI matches PhyloMeasures, including its conventions at the edges", {
     case <- reference[[name]]
     input <- long_form(case$communities)
 
-    result <- phylo_diversity(trees = list(case$tree),
+    result <- pd_by_community(trees = list(case$tree),
                               community = input$community,
                               species = input$species,
                               n_communities = input$n)
@@ -176,7 +176,7 @@ test_that("the moments agree with simulation", {
   set.seed(41)
   n_draws <- 4000
 
-  draws <- phylo_diversity(trees = list(tree),
+  draws <- pd_by_community(trees = list(tree),
                            community = rep(seq_len(n_draws), each = richness),
                            species = unlist(lapply(seq_len(n_draws),
                                                    function(i) sample(tree$tip.label, richness))),
@@ -202,7 +202,7 @@ test_that("PD is the spanning subtree, without the path to the root", {
 
   measure <- function(species){
 
-    phylo_diversity(list(tree), rep(1, length(species)), species, 1)$pd[1, 1]
+    pd_by_community(list(tree), rep(1, length(species)), species, 1)$pd[1, 1]
 
   }
 
@@ -230,11 +230,11 @@ test_that("trees sharing a topology are measured together and give the same answ
 
   })
 
-  together <- phylo_diversity(variants, input$community, input$species, input$n)
+  together <- pd_by_community(variants, input$community, input$species, input$n)
 
   for(i in seq_along(variants)){
 
-    alone <- phylo_diversity(variants[i], input$community, input$species, input$n)
+    alone <- pd_by_community(variants[i], input$community, input$species, input$n)
 
     expect_equal(together$pd[, i], alone$pd[, 1], tolerance = 1e-12)
     expect_equal(together$pdi[, i], alone$pdi[, 1], tolerance = 1e-9)
@@ -255,7 +255,7 @@ test_that("a tree arranged differently from the first is still handled correctly
 
   expect_false(identical(reordered$edge, tree$edge))
 
-  result <- phylo_diversity(list(tree, reordered, rotated),
+  result <- pd_by_community(list(tree, reordered, rotated),
                             input$community, input$species, input$n)
 
   expect_equal(result$pd[, 2], result$pd[, 1], tolerance = 1e-12)
@@ -271,9 +271,9 @@ test_that("repeated records and species missing from the tree do not change the 
 
   species <- tree$tip.label[c(3, 17, 40, 41)]
 
-  clean <- phylo_diversity(list(tree), rep(1, 4), species, 1)
+  clean <- pd_by_community(list(tree), rep(1, 4), species, 1)
 
-  messy <- phylo_diversity(list(tree),
+  messy <- pd_by_community(list(tree),
                            rep(1, 8),
                            c(species, species[1:2], "not_in_tree", "nor_this"),
                            1)
@@ -289,7 +289,7 @@ test_that("communities with no usable records come back as zero, in place", {
   tree <- reference$ultrametric$tree
 
   # community 2 of 4 has no records at all; community 3 only an unknown species
-  result <- phylo_diversity(list(tree),
+  result <- pd_by_community(list(tree),
                             community = c(1, 1, 3, 4, 4, 4),
                             species = c(tree$tip.label[1:2], "unknown", tree$tip.label[5:7]),
                             n_communities = 4)
@@ -381,7 +381,7 @@ test_that("a star tree reduces PD to species richness", {
   star <- ape::stree(12, type = "star")
   star$edge.length <- rep(1, 12)
 
-  result <- phylo_diversity(list(star),
+  result <- pd_by_community(list(star),
                             community = rep(1:3, c(2, 5, 12)),
                             species = c(star$tip.label[1:2], star$tip.label[3:7], star$tip.label),
                             n_communities = 3)

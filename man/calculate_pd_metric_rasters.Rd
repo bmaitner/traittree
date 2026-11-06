@@ -77,3 +77,6 @@ Nipperess, D. A. and Matsen, F. A. (2013). The mean and variance of phylogenetic
 
 Sandel, B. (2018). Richness-dependence of phylogenetic diversity indices. Ecography 41: 837-844. \doi{10.1111/ecog.02967}
 }
+\seealso{
+\code{\link{phylo_diversity}}, which does the same calculation for any set of communities, without rasters.
+}

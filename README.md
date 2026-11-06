@@ -73,6 +73,10 @@ names(result$pd_stack)
 | `data_matching()` | Prune a tree and an occurrence table to their shared species |
 | `richness_raster()` | Species richness per raster cell |
 | `calculate_pd_metric_rasters()` | PD and PDI rasters from time- and trait-scaled trees |
+| `phylo_diversity()` | PD and its standardized index (PDI) for any set of communities, with exact null moments and optional rarefaction |
+| `phylo_diversity_moments()` | The null mean and standard deviation of PD at a given richness |
+| `blend_distances()` | Mix phylogenetic and trait distances into one distance matrix |
+| `tune_blend_weight()` | Estimate the blending weight from the data |
 
 ## Two things worth knowing
 

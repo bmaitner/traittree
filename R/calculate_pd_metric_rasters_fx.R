@@ -15,6 +15,7 @@
 #' @details Phylogenetic diversity (PD) is the total branch length of the minimal subtree connecting the species in a cell; the path from that subtree to the root is not included. The phylogenetic diversity index (PDI) standardizes it: the mean PD of every set of the same number of species drawn from the phylogeny is subtracted, and the result divided by the standard deviation across those sets (Sandel 2018). Both moments are computed exactly rather than by randomization (Nipperess and Matsen 2013), and the species pool is every species left in the phylogeny once those without occurrences are removed. Negative values indicate species more closely related than expected by chance. A cell holding a single species has PD and PDI of zero.
 #'
 #' The standardization guarantees only that randomly assembled cells score zero whatever their richness. It does not make other values comparable between cells of different richness: under the same degree of phylogenetic clustering, richer cells receive more extreme values (Sandel 2018). Maps of PDI across cells whose richness varies should be read with that in mind. \code{rarefy_to} adds an index without this dependence. Each cell is rarefied to a common richness and compared with the null distribution for that richness; rather than drawing random subsets, the average over every possible rarefaction is computed exactly, as the expected PD of a random subset of the species in the cell, less the null mean, over the null standard deviation. Cells with fewer species than the target are NA. Rarefaction discards information, so the rarefied index is noisier than the plain one, increasingly so as the target falls; a very small target, which \code{"min"} can produce, leaves little power to tell cells apart.
+#' @seealso \code{\link{phylo_diversity}}, which does the same calculation for any set of communities, without rasters.
 #' @references Nipperess, D. A. and Matsen, F. A. (2013). The mean and variance of phylogenetic diversity under rarefaction. Methods in Ecology and Evolution 4: 566-572. \doi{10.1111/2041-210X.12042}
 #'
 #' Sandel, B. (2018). Richness-dependence of phylogenetic diversity indices. Ecography 41: 837-844. \doi{10.1111/ecog.02967}
@@ -235,7 +236,7 @@ calculate_pd_metric_rasters<-function(occurrences,
   #The time-scaled tree and the trait-scaled trees differ only in their branch
   #lengths, so they are measured together: everything that depends on topology
   #is worked out once and shared.
-  diversity<-phylo_diversity(trees = c(list(time_phylo),trait_trees),
+  diversity<-pd_by_community(trees = c(list(time_phylo),trait_trees),
                              community = cell_index,
                              species = as.character(occurrences[,1]),
                              n_communities = length(cell_values),

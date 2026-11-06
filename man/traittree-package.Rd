@@ -4,9 +4,9 @@
 \name{traittree-package}
 \alias{traittree}
 \alias{traittree-package}
-\title{traittree: Functions for scaling phylogeny by phenotypic traits}
+\title{traittree: Scale Phylogenies by Phenotypic Change}
 \description{
-This package provides a few tools allowing the user to re-scale phylogenies from units of time to units of morphological change.
+Rescales the branches of a phylogeny from units of time to units of phenotypic change, using ancestral trait reconstruction. Uncertainty in the reconstruction can be carried through to downstream analyses by drawing trees from the joint posterior of the ancestral states. Also blends phylogenetic and trait distances following Cadotte, Albert and Walker (2013) \doi{10.1111/ele.12161}, and maps phylogenetic diversity and its standardized index, with exact null moments from Nipperess and Matsen (2013) \doi{10.1111/2041-210X.12042} and the rarefaction of Sandel (2018) \doi{10.1111/ecog.02967}.
 }
 \author{
 \strong{Maintainer}: Brian Maitner \email{bmaitner@gmail.com}
