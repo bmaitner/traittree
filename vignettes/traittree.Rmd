@@ -14,10 +14,6 @@ knitr::opts_chunk$set(
   fig.width = 6,
   fig.height = 4
 )
-
-# The phylogenetic diversity sections need the suggested PhyloMeasures package,
-# which was archived from CRAN; skip them where it is not installed.
-has_phylomeasures <- requireNamespace("PhyloMeasures", quietly = TRUE)
 ```
 
 ```{r setup}
@@ -175,11 +171,9 @@ richness <- richness_raster(template.raster = template,
 ```
 
 `calculate_pd_metric_rasters()` puts the whole workflow together, returning
-phylogenetic diversity computed on both the time-scaled and trait-scaled trees.
-The diversity queries come from `PhyloMeasures`, a suggested dependency, so the
-remaining examples in this section run only where it is installed:
+phylogenetic diversity computed on both the time-scaled and trait-scaled trees:
 
-```{r pd, eval = has_phylomeasures}
+```{r pd}
 result <- calculate_pd_metric_rasters(occurrences = example_occurrences,
                                       phylogeny = example_tree,
                                       traits = example_traits,
@@ -193,7 +187,7 @@ maps. The time-based layers are unaffected, since they do not involve the
 traits, but the trait-based ones are replaced by a mean, a standard deviation,
 and an interval across trees, whose bounds `probs` controls:
 
-```{r pd_uncertainty, eval = has_phylomeasures}
+```{r pd_uncertainty}
 sampled <- calculate_pd_metric_rasters(occurrences = example_occurrences,
                                        phylogeny = example_tree,
                                        traits = example_traits,

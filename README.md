@@ -21,23 +21,7 @@ rasters).
 pak::pak("bmaitner/traittree")
 ```
 
-That is all most uses need. `remotes::install_github("bmaitner/traittree")`
-works equally well.
-
-The phylogenetic diversity functions — `calculate_pd_metric_rasters()` — need
-one extra package. `PhyloMeasures` was archived from CRAN in 2022, so it is a
-*suggested* dependency rather than a required one: everything else in the
-package installs and works without it, and `calculate_pd_metric_rasters()` tells
-you how to get it if you call it without. To install it:
-
-```r
-remotes::install_url(
-  "https://cran.r-project.org/src/contrib/Archive/PhyloMeasures/PhyloMeasures_2.1.tar.gz"
-)
-```
-
-It is compiled from source, so you will need the usual build tools (Rtools on
-Windows, Xcode command line tools on macOS).
+`remotes::install_github("bmaitner/traittree")` works equally well.
 
 ## What it does
 

@@ -1,6 +1,5 @@
-# The batched rewrite of calculate_pd_metric_rasters(), checked against the
-# original one-cell-at-a-time implementation in
-# helper-reference-implementations.R.
+# calculate_pd_metric_rasters(): the raster pipeline around the phylogenetic
+# diversity calculations, which have their own tests in test-phylo_diversity.R.
 
 # Build a small but non-trivial occurrence dataset over a template raster.
 simulate_occurrences <- function(n_tips = 40, n_cells = 60, n_records = 300, seed = 111){
@@ -17,55 +16,35 @@ simulate_occurrences <- function(n_tips = 40, n_cells = 60, n_records = 300, see
 
 }
 
-test_that("batched pd/pdi rasters match the original cell-by-cell implementation", {
+test_that("pd and pdi rasters reproduce the values PhyloMeasures gave", {
 
-  skip_on_cran()
-  skip_if_not_installed("PhyloMeasures")
-
-  fixture <- simulate_occurrences()
+  # Frozen output of the last version of this function that called
+  # pd.query() from PhyloMeasures; see dev/pdi_research/make_pd_fixtures.R. Supplying
+  # the trait-scaled trees keeps the comparison independent of the reconstruction.
+  reference <- readRDS(test_path("fixtures", "pd_reference.rds"))$pipeline
 
   template <- raster::raster(nrows = 10, ncols = 10)
 
-  batched <- suppressMessages(
-    calculate_pd_metric_rasters(occurrences = fixture$occurrences,
-                                phylogeny = fixture$tree,
-                                traits = fixture$traits,
-                                template.raster = template))
+  single <- calculate_pd_metric_rasters(occurrences = example_occurrences,
+                                        phylogeny = example_tree,
+                                        traits = NULL,
+                                        template.raster = template,
+                                        trait_phylo = reference$trait_tree)
 
-  reference <- suppressMessages(
-    reference_calculate_pd_metric_rasters(occurrences = fixture$occurrences,
-                                          phylogeny = fixture$tree,
-                                          traits = fixture$traits,
-                                          template.raster = template))
+  several <- calculate_pd_metric_rasters(occurrences = example_occurrences,
+                                         phylogeny = example_tree,
+                                         traits = NULL,
+                                         template.raster = template,
+                                         trait_phylo = reference$trait_sample)
 
-  expect_equal(names(batched), names(reference))
-  expect_equal(names(batched$pd_stack), names(reference$pd_stack))
-
-  for(layer in names(batched$pd_stack)){
-
-    expect_equal(raster::values(batched$pd_stack[[layer]]),
-                 raster::values(reference$pd_stack[[layer]]),
-                 tolerance = 1e-8,
-                 info = layer)
-
-  }
-
-  # The phylogenies returned alongside the rasters should be untouched by the
-  # change to how cells are queried.
-  for(component in c("time_phylo", "trait_phylo", "rate_phylo")){
-
-    expect_equal(batched[[component]]$tip.label, reference[[component]]$tip.label, info = component)
-    expect_equal(batched[[component]]$edge.length, reference[[component]]$edge.length,
-                 tolerance = 1e-8, info = component)
-
-  }
+  expect_equal(raster::values(single$pd_stack), reference$single, tolerance = 1e-9)
+  expect_equal(raster::values(several$pd_stack), reference$several, tolerance = 1e-9)
 
 })
 
 test_that("cells with fewer than two records stay NA, and empty cells stay NA", {
 
   skip_on_cran()
-  skip_if_not_installed("PhyloMeasures")
 
   fixture <- simulate_occurrences(n_records = 80, n_cells = 60)
 
@@ -98,7 +77,6 @@ test_that("cells with fewer than two records stay NA, and empty cells stay NA", 
 test_that("verbose reports progress and is silent by default", {
 
   skip_on_cran()
-  skip_if_not_installed("PhyloMeasures")
 
   fixture <- simulate_occurrences(n_tips = 20, n_cells = 20, n_records = 100)
 
@@ -121,7 +99,6 @@ test_that("verbose reports progress and is silent by default", {
 test_that("n_trees > 1 replaces the trait layers with a summary across trees", {
 
   skip_on_cran()
-  skip_if_not_installed("PhyloMeasures")
 
   fixture <- simulate_occurrences()
 
@@ -159,7 +136,6 @@ test_that("n_trees > 1 replaces the trait layers with a summary across trees", {
 test_that("the summary layers are internally consistent and carry real spread", {
 
   skip_on_cran()
-  skip_if_not_installed("PhyloMeasures")
 
   fixture <- simulate_occurrences()
 
@@ -199,7 +175,6 @@ test_that("the summary layers are internally consistent and carry real spread", 
 test_that("probs controls the quantiles reported", {
 
   skip_on_cran()
-  skip_if_not_installed("PhyloMeasures")
 
   fixture <- simulate_occurrences()
 
@@ -225,7 +200,6 @@ test_that("probs controls the quantiles reported", {
 test_that("an already scaled phylogeny can be supplied instead of traits", {
 
   skip_on_cran()
-  skip_if_not_installed("PhyloMeasures")
 
   fixture <- simulate_occurrences()
 

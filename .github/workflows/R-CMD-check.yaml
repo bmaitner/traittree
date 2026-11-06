@@ -5,13 +5,6 @@
 # platforms (valgrind, gcc-san, older toolchains) that are worth a look before
 # a CRAN submission but not on every commit.
 #
-# PhyloMeasures was archived from CRAN, so it cannot be resolved from the
-# repositories.  It is a suggested dependency, so the package installs and
-# checks without it, but we want the phylogenetic diversity code exercised here,
-# so it is installed from the archive via extra-packages below.  Keeping the URL
-# here rather than in a DESCRIPTION Remotes: field leaves DESCRIPTION standard:
-# pak and remotes disagree on how to spell that field, and only pak reads this.
-# It needs a compiler but no system libraries.
 
 on:
   push:
@@ -60,9 +53,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: |
-            any::rcmdcheck
-            PhyloMeasures=url::https://cran.r-project.org/src/contrib/Archive/PhyloMeasures/PhyloMeasures_2.1.tar.gz
+          extra-packages: any::rcmdcheck
           needs: check
 
       - uses: r-lib/actions/check-r-package@v2

@@ -8,11 +8,14 @@
 #' @param trait_phylo Optional trait-scaled phylogeny, or a multiPhylo of them, to use instead of scaling the phylogeny internally. Defaults to NULL, meaning scale it here.
 #' @param n_trees Number of trait-scaled phylogenies to draw from the joint posterior of the ancestral states, so that uncertainty in the reconstruction is carried into the metrics. Defaults to 1, which uses the point estimate and reproduces the previous behaviour. Ignored when \code{trait_phylo} is supplied.
 #' @param probs The two quantiles summarising the trait-based metrics across trees. Defaults to the central 95 percent.
-#' @param verbose Logical. If TRUE, report progress while querying cells. Defaults to FALSE.
+#' @param verbose Logical. If TRUE, report what is being computed. Defaults to FALSE.
 #' @return A list with \code{pd_stack}, \code{time_phylo}, \code{trait_phylo} and \code{rate_phylo}. With a single trait-scaled phylogeny, \code{pd_stack} holds \code{pd_time}, \code{pdi_time}, \code{pd_traits} and \code{pdi_traits}. With several, the trait-based layers are replaced by their mean, standard deviation and the two requested quantiles across trees, and \code{trait_phylo} is the multiPhylo that produced them.
 #' @note The time-based metrics do not depend on the traits, so they are computed once and are unaffected by \code{n_trees}.
-#' @note Requires the suggested package \code{PhyloMeasures}, which provides the diversity queries. It was archived from CRAN and has to be installed from the archive; see the README.
-#' @examplesIf requireNamespace("PhyloMeasures", quietly = TRUE)
+#' @details Phylogenetic diversity (PD) is the total branch length of the minimal subtree connecting the species in a cell; the path from that subtree to the root is not included. The phylogenetic diversity index (PDI) standardizes it: the mean PD of every set of the same number of species drawn from the phylogeny is subtracted, and the result divided by the standard deviation across those sets (Sandel 2018). Both moments are computed exactly rather than by randomization (Nipperess and Matsen 2013), and the species pool is every species left in the phylogeny once those without occurrences are removed. Negative values indicate species more closely related than expected by chance. A cell holding a single species has PD and PDI of zero.
+#' @references Nipperess, D. A. and Matsen, F. A. (2013). The mean and variance of phylogenetic diversity under rarefaction. Methods in Ecology and Evolution 4: 566-572. \doi{10.1111/2041-210X.12042}
+#'
+#' Sandel, B. (2018). Richness-dependence of phylogenetic diversity indices. Ecography 41: 837-844. \doi{10.1111/ecog.02967}
+#' @examples
 #' template <- raster::raster(nrows = 10, ncols = 10)
 #'
 #' # Point estimate: one trait-scaled phylogeny
@@ -68,8 +71,8 @@ calculate_pd_metric_rasters<-function(occurrences,
   }
 
   #A supplied trait_phylo is validated here, with the other arguments, rather
-  #than where it is used, so that a bad call reports the bad argument whether or
-  #not the optional PhyloMeasures happens to be installed.
+  #than where it is used, so that a bad call fails before any of the
+  #reconstruction work is done.
   if(!is.null(trait_phylo)){
 
     if(n_trees != 1){
@@ -89,12 +92,6 @@ calculate_pd_metric_rasters<-function(occurrences,
     }
 
   }
-
-  #The phylogenetic diversity queries come from PhyloMeasures, a suggested
-  #dependency.  Checked after every argument, so a bad call reports the bad
-  #argument either way, and before the reconstruction work, so it does not fail
-  #half way through.
-  require_phylomeasures()
 
   #1) obtain the trait-scaled phylogenies
 
@@ -168,87 +165,42 @@ calculate_pd_metric_rasters<-function(occurrences,
 
   }
 
-  #3) Query every occupied cell
+  #3) Phylogenetic diversity of every occupied cell
 
-  #Group the occurrences by cell in a single pass.  Scanning the whole
-  #occurrence table once per cell is quadratic in the size of the problem.
   cell_values<-unique(occurrences[,2])
 
-  cell_key<-factor(x = as.character(occurrences[,2]),
-                   levels = as.character(cell_values))
+  cell_index<-match(as.character(occurrences[,2]),as.character(cell_values))
 
-  tip_labels<-time_phylo$tip.label
-
-  #Columns of the presence/absence matrix that each occurrence corresponds to.
-  species_columns<-match(as.character(occurrences[,1]),tip_labels)
-
-  columns_by_cell<-split(x = species_columns,f = cell_key)
-
-  #As before, cells with fewer than two occurrence records are not queried.
-  records_per_cell<-as.numeric(table(cell_key))
+  #As before, cells with fewer than two occurrence records are not reported.
+  records_per_cell<-tabulate(cell_index,nbins = length(cell_values))
 
   cells_to_query<-which(records_per_cell >= 2)
 
-  pd_time<-rep(NA_real_,length(cell_values))
-  pdi_time<-pd_time
+  if(verbose){
 
-  #One row per trait tree, one column per cell.
-  pd_traits<-matrix(data = NA_real_,nrow = length(trait_trees),ncol = length(cell_values))
-  pdi_traits<-pd_traits
-
-  #PhyloMeasures accepts many communities at once, so query in blocks rather
-  #than one cell at a time.  The block size keeps the presence/absence matrix to
-  #a few million entries regardless of how many species there are.
-  cells_per_block<-max(1,floor(2e6/length(tip_labels)))
-
-  if(length(cells_to_query) > 0){
-
-    for(block_start in seq(from = 1,to = length(cells_to_query),by = cells_per_block)){
-
-      block<-cells_to_query[block_start:min(block_start + cells_per_block - 1,
-                                            length(cells_to_query))]
-
-      community_matrix<-matrix(data = 0,nrow = length(block),ncol = length(tip_labels))
-      colnames(community_matrix)<-tip_labels
-
-      for(row in seq_along(block)){
-
-        #Occurrences of species absent from the tree contribute no column, which
-        #is how the original name matching behaved.
-        columns<-columns_by_cell[[block[row]]]
-        columns<-columns[!is.na(columns)]
-
-        if(length(columns) > 0){
-
-          community_matrix[row,columns]<-1
-
-        }
-
-      }
-
-      #The community matrix does not depend on the tree, so build it once per
-      #block and reuse it for every tree.
-      pd_time[block]<-PhyloMeasures::pd.query(tree = time_phylo,matrix = community_matrix,standardize = FALSE)
-      pdi_time[block]<-PhyloMeasures::pd.query(tree = time_phylo,matrix = community_matrix,standardize = TRUE)
-
-      for(tree_index in seq_along(trait_trees)){
-
-        pd_traits[tree_index,block]<-PhyloMeasures::pd.query(tree = trait_trees[[tree_index]],matrix = community_matrix,standardize = FALSE)
-        pdi_traits[tree_index,block]<-PhyloMeasures::pd.query(tree = trait_trees[[tree_index]],matrix = community_matrix,standardize = TRUE)
-
-      }
-
-      if(verbose){
-
-        message("Queried ",min(block_start + cells_per_block - 1,length(cells_to_query)),
-                " of ",length(cells_to_query)," cells across ",length(trait_trees),
-                if(length(trait_trees) == 1) " tree" else " trees")
-
-      }
-
-    }#block loop
+    message("Computing phylogenetic diversity for ",length(cells_to_query),
+            " cells across ",length(trait_trees),
+            if(length(trait_trees) == 1) " tree" else " trees")
 
   }
+
+  #The time-scaled tree and the trait-scaled trees differ only in their branch
+  #lengths, so they are measured together: everything that depends on topology
+  #is worked out once and shared.
+  diversity<-phylo_diversity(trees = c(list(time_phylo),trait_trees),
+                             community = cell_index,
+                             species = as.character(occurrences[,1]),
+                             n_communities = length(cell_values))
+
+  diversity$pd[records_per_cell < 2,]<-NA
+  diversity$pdi[records_per_cell < 2,]<-NA
+
+  pd_time<-diversity$pd[,1]
+  pdi_time<-diversity$pdi[,1]
+
+  #One row per trait tree, one column per cell.
+  pd_traits<-t(diversity$pd[,-1,drop = FALSE])
+  pdi_traits<-t(diversity$pdi[,-1,drop = FALSE])
 
   #4) Turn the per-cell values into rasters
 

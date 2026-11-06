@@ -2,17 +2,24 @@
 
 ## Installation
 
-* `PhyloMeasures` moved from `Imports` to `Suggests`. It was archived from CRAN
-  in 2022 and has to be built from the archive, which previously made the whole
-  package uninstallable for anyone who did not already have it. Only
-  `calculate_pd_metric_rasters()` needs it; everything else installs and runs
-  without it, and that function reports how to install it if called without.
+* `PhyloMeasures` is no longer needed. It was archived from CRAN in 2022, which
+  made the package awkward to install and impossible to submit. Phylogenetic
+  diversity and its standardized index are now computed in the package, with
+  no dependency beyond `ape`.
 
-* `DESCRIPTION` no longer carries a `Remotes:` field. `pak` and `remotes` spell
-  that field incompatibly — `pak` requires a `PhyloMeasures=url::` prefix and
-  `remotes` reads the prefix as part of the remote type — so no single spelling
-  worked for both. The archive URL now lives in the GitHub Actions workflow,
-  which is the only place that needs it, leaving `DESCRIPTION` standard.
+* `calculate_pd_metric_rasters()` returns the same values as before. Checked
+  against output frozen from the PhyloMeasures-based version, every layer agrees
+  to 1e-9 or better, including the summaries across a posterior sample of
+  trees. The null mean and standard deviation of phylogenetic diversity are
+  exact (Nipperess and Matsen 2013), not estimated by randomization. One value
+  differs by design: when a cell holds every species in the phylogeny the null
+  standard deviation is exactly zero, where PhyloMeasures returned rounding
+  noise of order 1e-8.
+
+* It is also faster where it matters. For a single tree the speed is about the
+  same as PhyloMeasures. Across a posterior sample it is roughly ten times
+  faster, because nothing in the null model depends on branch lengths: trees
+  that share a topology share all of the work except one weighted sum each.
 
 * `misc/` is build-ignored, so `misc/code_for_dev.R` is no longer shipped inside
   locally built tarballs, and a stale build artifact is no longer tracked.

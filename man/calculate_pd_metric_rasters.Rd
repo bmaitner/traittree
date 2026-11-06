@@ -30,7 +30,7 @@ calculate_pd_metric_rasters(
 
 \item{probs}{The two quantiles summarising the trait-based metrics across trees. Defaults to the central 95 percent.}
 
-\item{verbose}{Logical. If TRUE, report progress while querying cells. Defaults to FALSE.}
+\item{verbose}{Logical. If TRUE, report what is being computed. Defaults to FALSE.}
 }
 \value{
 A list with \code{pd_stack}, \code{time_phylo}, \code{trait_phylo} and \code{rate_phylo}. With a single trait-scaled phylogeny, \code{pd_stack} holds \code{pd_time}, \code{pdi_time}, \code{pd_traits} and \code{pdi_traits}. With several, the trait-based layers are replaced by their mean, standard deviation and the two requested quantiles across trees, and \code{trait_phylo} is the multiPhylo that produced them.
@@ -38,13 +38,13 @@ A list with \code{pd_stack}, \code{time_phylo}, \code{trait_phylo} and \code{rat
 \description{
 calculate_pd_metric_rasters
 }
+\details{
+Phylogenetic diversity (PD) is the total branch length of the minimal subtree connecting the species in a cell; the path from that subtree to the root is not included. The phylogenetic diversity index (PDI) standardizes it: the mean PD of every set of the same number of species drawn from the phylogeny is subtracted, and the result divided by the standard deviation across those sets (Sandel 2018). Both moments are computed exactly rather than by randomization (Nipperess and Matsen 2013), and the species pool is every species left in the phylogeny once those without occurrences are removed. Negative values indicate species more closely related than expected by chance. A cell holding a single species has PD and PDI of zero.
+}
 \note{
 The time-based metrics do not depend on the traits, so they are computed once and are unaffected by \code{n_trees}.
-
-Requires the suggested package \code{PhyloMeasures}, which provides the diversity queries. It was archived from CRAN and has to be installed from the archive; see the README.
 }
 \examples{
-\dontshow{if (requireNamespace("PhyloMeasures", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 template <- raster::raster(nrows = 10, ncols = 10)
 
 # Point estimate: one trait-scaled phylogeny
@@ -66,5 +66,9 @@ names(sampled$pd_stack)
 
 # The spread across trees is the uncertainty in trait-based PD
 summary(raster::values(sampled$pd_stack[["pd_traits_sd"]]))
-\dontshow{\}) # examplesIf}
+}
+\references{
+Nipperess, D. A. and Matsen, F. A. (2013). The mean and variance of phylogenetic diversity under rarefaction. Methods in Ecology and Evolution 4: 566-572. \doi{10.1111/2041-210X.12042}
+
+Sandel, B. (2018). Richness-dependence of phylogenetic diversity indices. Ecography 41: 837-844. \doi{10.1111/ecog.02967}
 }
