@@ -126,7 +126,11 @@ Checked against 4,000 replicate rarefactions to k = 10 at richness 15, 30 and
 45: differences of -0.005, -0.013 and -0.008, each inside one Monte Carlo
 standard error (`dev/pdi_research/verify_rarefied.R`). So Sandel's "RR" estimator can be had exactly, with no
 replication, from machinery we need anyway. The per-edge counts it requires are
-the ones the PD calculation produces. A `rarefy_to` argument would be cheap.
+the ones the PD calculation produces.
+
+Implemented as `rarefy_to` in `calculate_pd_metric_rasters()`; the tests check
+it against the average over every possible rarefaction, which it matches to
+rounding error.
 
 ## Other things learned
 

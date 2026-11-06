@@ -26,6 +26,21 @@
 
 ## New features
 
+* `calculate_pd_metric_rasters()` gains `rarefy_to`, which adds a phylogenetic
+  diversity index free of its dependence on species richness. The usual index
+  guarantees only that randomly assembled cells score zero: under the same
+  degree of clustering, richer cells receive more extreme values (Sandel 2018),
+  which matters for any map across cells of differing richness. Sandel's remedy
+  is to rarefy every community to a common richness and average the index over
+  many random rarefactions. Here that average is computed exactly, with no
+  replication, as the expected diversity of a random subset of the cell's
+  species standardized against the null for the target richness. It agrees with
+  the average over every possible rarefaction to rounding error. The new layers
+  are `pdi_time_rarefied` and `pdi_traits_rarefied`; cells with fewer species
+  than the target are `NA`. In a reduced version of Sandel's simulation the
+  plain index shifted about four times as far across richness levels as the
+  rarefied one.
+
 * `blend_distances()` and `tune_blend_weight()` add the other route to combining
   trait and phylogenetic information: rather than rescaling branch lengths, they
   mix a phylogenetic distance matrix with a trait distance matrix, following the

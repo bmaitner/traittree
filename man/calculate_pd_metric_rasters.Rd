@@ -12,6 +12,7 @@ calculate_pd_metric_rasters(
   trait_phylo = NULL,
   n_trees = 1,
   probs = c(0.025, 0.975),
+  rarefy_to = NULL,
   verbose = FALSE
 )
 }
@@ -30,16 +31,20 @@ calculate_pd_metric_rasters(
 
 \item{probs}{The two quantiles summarising the trait-based metrics across trees. Defaults to the central 95 percent.}
 
+\item{rarefy_to}{Optional richness to rarefy every cell to before standardizing, which removes the dependence of the index on species richness (see Details). Either a whole number of at least 2, or \code{"min"} for the smallest richness among the reported cells with two or more species. Defaults to NULL, meaning no rarefied index is computed.}
+
 \item{verbose}{Logical. If TRUE, report what is being computed. Defaults to FALSE.}
 }
 \value{
-A list with \code{pd_stack}, \code{time_phylo}, \code{trait_phylo} and \code{rate_phylo}. With a single trait-scaled phylogeny, \code{pd_stack} holds \code{pd_time}, \code{pdi_time}, \code{pd_traits} and \code{pdi_traits}. With several, the trait-based layers are replaced by their mean, standard deviation and the two requested quantiles across trees, and \code{trait_phylo} is the multiPhylo that produced them.
+A list with \code{pd_stack}, \code{time_phylo}, \code{trait_phylo} and \code{rate_phylo}. With a single trait-scaled phylogeny, \code{pd_stack} holds \code{pd_time}, \code{pdi_time}, \code{pd_traits} and \code{pdi_traits}. With several, the trait-based layers are replaced by their mean, standard deviation and the two requested quantiles across trees, and \code{trait_phylo} is the multiPhylo that produced them. With \code{rarefy_to}, the rarefied index is appended as \code{pdi_time_rarefied} and \code{pdi_traits_rarefied} (summarised across trees in the same way), and the richness used is returned as \code{rarefied_to}.
 }
 \description{
 calculate_pd_metric_rasters
 }
 \details{
 Phylogenetic diversity (PD) is the total branch length of the minimal subtree connecting the species in a cell; the path from that subtree to the root is not included. The phylogenetic diversity index (PDI) standardizes it: the mean PD of every set of the same number of species drawn from the phylogeny is subtracted, and the result divided by the standard deviation across those sets (Sandel 2018). Both moments are computed exactly rather than by randomization (Nipperess and Matsen 2013), and the species pool is every species left in the phylogeny once those without occurrences are removed. Negative values indicate species more closely related than expected by chance. A cell holding a single species has PD and PDI of zero.
+
+The standardization guarantees only that randomly assembled cells score zero whatever their richness. It does not make other values comparable between cells of different richness: under the same degree of phylogenetic clustering, richer cells receive more extreme values (Sandel 2018). Maps of PDI across cells whose richness varies should be read with that in mind. \code{rarefy_to} adds an index without this dependence. Each cell is rarefied to a common richness and compared with the null distribution for that richness; rather than drawing random subsets, the average over every possible rarefaction is computed exactly, as the expected PD of a random subset of the species in the cell, less the null mean, over the null standard deviation. Cells with fewer species than the target are NA. Rarefaction discards information, so the rarefied index is noisier than the plain one, increasingly so as the target falls; a very small target, which \code{"min"} can produce, leaves little power to tell cells apart.
 }
 \note{
 The time-based metrics do not depend on the traits, so they are computed once and are unaffected by \code{n_trees}.

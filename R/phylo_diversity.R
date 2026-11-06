@@ -450,13 +450,28 @@ pd_of_communities <- function(structure, lengths, community, tip, n_communities,
 #' @param species Species name of each occurrence. Names absent from a tree are
 #'   ignored, and repeats within a community are counted once.
 #' @param n_communities Number of communities.
+#' @param rarefy_to Optional richness to rarefy every community to before
+#'   standardizing, which removes the dependence of the index on richness
+#'   (Sandel 2018). See Details.
+#' @details Sandel (2018) rarefies each community to a common richness and
+#'   averages the index over many random rarefactions. For a fixed target
+#'   richness the index is a linear function of PD, so that average is
+#'
+#'       (expected PD of a random subset of the community - mean) / sd
+#'
+#'   with the mean and sd those of the target richness, and the expected PD of a
+#'   random subset given exactly by the null mean formula applied to the
+#'   community's own subtree. No replication is needed, and none is done.
 #' @return A list: `richness`, from the first tree; `pd` and `pdi`, communities
-#'   by trees matrices.
+#'   by trees matrices; and, with `rarefy_to`, `rarefied_pd` and `rarefied_pdi`,
+#'   the same shape, NA for communities of fewer species than the target.
 #' @noRd
-phylo_diversity <- function(trees, community, species, n_communities){
+phylo_diversity <- function(trees, community, species, n_communities, rarefy_to = NULL){
 
   pd <- matrix(data = NA_real_, nrow = n_communities, ncol = length(trees))
   pdi <- pd
+  rarefied_pd <- pd
+  rarefied_pdi <- pd
 
   first <- trees[[1]]
 
@@ -475,10 +490,18 @@ phylo_diversity <- function(trees, community, species, n_communities){
     alone <- phylo_diversity(trees = trees[other],
                              community = community,
                              species = species,
-                             n_communities = n_communities)
+                             n_communities = n_communities,
+                             rarefy_to = rarefy_to)
 
     pd[, other] <- alone$pd
     pdi[, other] <- alone$pdi
+
+    if(!is.null(rarefy_to)){
+
+      rarefied_pd[, other] <- alone$rarefied_pd
+      rarefied_pdi[, other] <- alone$rarefied_pdi
+
+    }
 
   }
 
@@ -499,9 +522,26 @@ phylo_diversity <- function(trees, community, species, n_communities){
                                 lengths = lengths,
                                 community = community[usable],
                                 tip = tip[usable],
-                                n_communities = n_communities)
+                                n_communities = n_communities,
+                                rarefy_to = rarefy_to)
 
   sums <- pd_branch_sums(structure = structure, lengths = lengths)
+
+  #Subtract the null mean and divide by the null sd, tree by tree. Where the sd
+  #is zero the difference is left undivided.
+  standardize <- function(values, richness){
+
+    moments <- pd_null_moments(structure = structure, sums = sums, richness = richness)
+
+    centred <- sweep(values, 2, moments$mean)
+
+    varies <- moments$sd > 0
+
+    centred[, varies] <- sweep(centred[, varies, drop = FALSE], 2, moments$sd[varies], "/")
+
+    centred
+
+  }
 
   index <- observed$pd
 
@@ -509,21 +549,27 @@ phylo_diversity <- function(trees, community, species, n_communities){
 
     members <- which(observed$richness == richness)
 
-    moments <- pd_null_moments(structure = structure, sums = sums, richness = richness)
-
-    centred <- sweep(observed$pd[members, , drop = FALSE], 2, moments$mean)
-
-    varies <- moments$sd > 0
-
-    centred[, varies] <- sweep(centred[, varies, drop = FALSE], 2, moments$sd[varies], "/")
-
-    index[members, ] <- centred
+    index[members, ] <- standardize(observed$pd[members, , drop = FALSE], richness)
 
   }
 
   pd[, shared] <- observed$pd
   pdi[, shared] <- index
 
-  list(richness = observed$richness, pd = pd, pdi = pdi)
+  if(is.null(rarefy_to)){
+
+    return(list(richness = observed$richness, pd = pd, pdi = pdi))
+
+  }
+
+  #Every community is compared with the same null, that of the target richness.
+  rarefied_pd[, shared] <- observed$rarefied
+  rarefied_pdi[, shared] <- standardize(observed$rarefied, rarefy_to)
+
+  list(richness = observed$richness,
+       pd = pd,
+       pdi = pdi,
+       rarefied_pd = rarefied_pd,
+       rarefied_pdi = rarefied_pdi)
 
 }
