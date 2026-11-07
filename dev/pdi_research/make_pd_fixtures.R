@@ -4,12 +4,26 @@
 # regenerating:
 #   remotes::install_url("https://cran.r-project.org/src/contrib/Archive/PhyloMeasures/PhyloMeasures_2.1.tar.gz")
 #
-# The end-to-end block at the bottom was produced with the last version of
-# calculate_pd_metric_rasters() that called PhyloMeasures (commit c5cf3df); it
-# cannot be regenerated from later versions and is kept as-is.
+# Cases 1 to 4 come straight from PhyloMeasures and can be regenerated at any
+# time. The pipeline block is different: it is the output of the last version
+# of calculate_pd_metric_rasters() that called PhyloMeasures (commit c5cf3df).
+# Recomputing it with the current package would replace the independent
+# reference with the implementation under test, so it is carried over from the
+# existing fixture file, never recomputed here.
 
-suppressMessages(devtools::load_all("."))
 library(ape)
+
+fixture_path <- "tests/testthat/fixtures/pd_reference.rds"
+
+load_example <- function(name){
+
+  env <- new.env()
+  load(file.path("data", paste0(name, ".rda")), envir = env)
+  get(name, envir = env)
+
+}
+
+example_tree <- load_example("example_tree")
 
 set.seed(20261106)
 
@@ -49,23 +63,20 @@ ladder <- ape::stree(20, type = "left")
 ladder$edge.length <- stats::runif(nrow(ladder$edge), 0.1, 2)
 ladder_case <- reference_case(ladder, c(2, 3, 5, 10, 19, 20, 4))
 
-# 5. end to end: the raster pipeline as computed through PhyloMeasures
-trait_tree <- scale_branches_multidimensional(example_tree, example_traits)
-set.seed(99)
-trait_sample <- scale_branches_multidimensional_with_variation(example_tree, example_traits, n_trees = 4)
-template <- raster::raster(nrows = 10, ncols = 10)
+# 5. end to end: the raster pipeline as computed through PhyloMeasures, taken
+#    from the existing fixture and never recomputed (see the header)
+if(!file.exists(fixture_path)){
 
-single <- calculate_pd_metric_rasters(example_occurrences, example_tree, traits = NULL,
-                                      template.raster = template, trait_phylo = trait_tree)
-several <- calculate_pd_metric_rasters(example_occurrences, example_tree, traits = NULL,
-                                       template.raster = template, trait_phylo = trait_sample)
+  stop("The pipeline block can only come from the existing fixture file, which ",
+       "is missing. It was produced by commit c5cf3df; check that out to rebuild it.")
 
-pipeline <- list(trait_tree = trait_tree,
-                 trait_sample = trait_sample,
-                 single = raster::values(single$pd_stack),
-                 several = raster::values(several$pd_stack))
+}
+
+pipeline <- readRDS(fixture_path)$pipeline
+
+stopifnot(identical(names(pipeline), c("trait_tree", "trait_sample", "single", "several")))
 
 saveRDS(list(ultrametric = ultrametric, ragged = ragged_case, tiny = tiny_case,
              ladder = ladder_case, pipeline = pipeline,
              source = "PhyloMeasures 2.1, null.model = 'uniform'"),
-        "tests/testthat/fixtures/pd_reference.rds", version = 2)
+        fixture_path, version = 2)
