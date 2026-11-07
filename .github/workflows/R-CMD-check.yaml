@@ -4,7 +4,6 @@
 # The R-hub workflow alongside this one stays manual: it covers the unusual
 # platforms (valgrind, gcc-san, older toolchains) that are worth a look before
 # a CRAN submission but not on every commit.
-#
 
 on:
   push:
