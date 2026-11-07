@@ -150,6 +150,51 @@ The internals are in `R/pd_internals.R`; `phylo_diversity()` and
 `phylo_diversity_moments()` in `R/phylo_diversity.R` are the exported interface;
 `calculate_pd_metric_rasters()` calls the internals directly.
 
+## Deferred: abundance-weighted null models
+
+PhyloMeasures offered two abundance-weighted nulls that the package does not
+have. Deferred in November 2026 as not needed for the paper. What was learned
+from the PhyloMeasures source, so that this can be picked up without re-reading
+it:
+
+**`sequential`.** Species drawn one at a time without replacement, each with
+probability proportional to its abundance: what `sample(x, r, prob = w)` does.
+PhyloMeasures has no formula for it and estimates the moments by Monte Carlo
+(`reps` draws, default 1000). The same approach here would be cheap, since
+`pd_of_communities()` handles thousands of replicate communities at once.
+
+**`frequency.by.richness`.** Each species included independently with
+probability `p_i = a_i / sum(a)`, the draw kept only if it has exactly `r`
+species. Equivalent to `P(S) proportional to prod_{i in S} p_i / (1 - p_i)`
+over sets of size `r`. PhyloMeasures computes the moments exactly with
+generating functions (Tsirogiannis and Sandel 2016, RECOMB, "Fast phylogenetic
+biodiversity computations under a non-uniform random distribution"; paywalled,
+not read). From the source: each clade carries the polynomial
+`prod_{tips i} ((1 - p_i) + p_i x)`, whose coefficient `k` is the probability
+that `k` of its tips are selected; polynomials multiply up the tree, truncated
+at degree `r`. For the mean, each edge contributes its length times the
+coefficients `1..r-1` of its clade polynomial, and the cases where all `r`
+selected tips lie below one edge (edge not on the unrooted subtree) are
+subtracted using the probability that nothing is selected elsewhere. For the
+variance, pairwise products of child polynomials across children, cross terms
+of an edge with its descendants, and squared self terms. Everything is finally
+divided by the coefficient `r` of the root polynomial. Two complications: the
+coefficients underflow doubles on large trees (PhyloMeasures carries scaled
+numbers; work in log scale here), and the pairwise variance terms are fiddly.
+A day or two of careful work.
+
+**Before starting either:** freeze reference values from PhyloMeasures with
+`pd.query(..., null.model = ..., abundance.weights = ...)` and
+`pd.moments(...)`, as `make_pd_fixtures.R` does for the uniform null. That
+needs PhyloMeasures installed, which it is on this machine; it is the thing
+that makes the implementation testable.
+
+**Design decisions to make:** what the raster pipeline would use as
+abundances (each species' number of occupied cells is the natural choice);
+and that `rarefy_to` should stay restricted to the uniform null, since
+rarefying a community is uniform subsampling and no reference defines its
+combination with a weighted null.
+
 ## Licence
 
 PhyloMeasures is GPL-3 and traittree is MIT, so its code cannot be translated
