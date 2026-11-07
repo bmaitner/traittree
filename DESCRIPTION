@@ -13,7 +13,10 @@ Description: Rescales the branches of a phylogeny from units of time to units
     <doi:10.1111/ecog.02967>.
 Depends: R (>= 3.5.0)
 License: MIT + file LICENSE
+URL: https://github.com/bmaitner/traittree
+BugReports: https://github.com/bmaitner/traittree/issues
 Encoding: UTF-8
+Language: en-US
 LazyData: true
 Imports: 
     raster,
