@@ -62,6 +62,17 @@ names(result$pd_stack)
 #> "pd_time" "pdi_time" "pd_traits_mean" "pd_traits_sd" "pd_traits_q2.5" ...
 ```
 
+The phylogenetic diversity behind those maps is available on its own, for any
+communities and any tree. The index that standardizes it is computed from exact
+null moments rather than by shuffling, and `rarefy_to` gives a version that can
+be compared between communities of different richness:
+
+```r
+diversity <- phylo_diversity(tree = example_tree,
+                             communities = example_occurrences,
+                             rarefy_to = 4)
+```
+
 ## Functions
 
 | Function | Purpose |
