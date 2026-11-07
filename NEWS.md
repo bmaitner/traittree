@@ -1,6 +1,56 @@
 # traittree 0.0.0.9000
 
+## Installation
+
+* `PhyloMeasures` is no longer needed. It was archived from CRAN in 2022, which
+  made the package awkward to install and impossible to submit. Phylogenetic
+  diversity and its standardized index are now computed in the package, with
+  no dependency beyond `ape`.
+
+* `calculate_pd_metric_rasters()` returns the same values as before. Checked
+  against output frozen from the PhyloMeasures-based version, every layer agrees
+  to 1e-9 or better, including the summaries across a posterior sample of
+  trees. The null mean and standard deviation of phylogenetic diversity are
+  exact (Nipperess and Matsen 2013), not estimated by randomization. One value
+  differs by design: when a cell holds every species in the phylogeny the null
+  standard deviation is exactly zero, where PhyloMeasures returned rounding
+  noise of order 1e-8.
+
+* It is also faster where it matters. For a single tree the speed is about the
+  same as PhyloMeasures. Across a posterior sample it is roughly ten times
+  faster, because nothing in the null model depends on branch lengths: trees
+  that share a topology share all of the work except one weighted sum each.
+
+* `misc/` is build-ignored, so `misc/code_for_dev.R` is no longer shipped inside
+  locally built tarballs, and a stale build artifact is no longer tracked.
+
 ## New features
+
+* `phylo_diversity()` computes Faith's phylogenetic diversity and its
+  standardized index for any set of communities, given either as a matrix of
+  communities by species or as a table of occurrences. `phylo_diversity_moments()`
+  returns the null mean and standard deviation the index is built from, which
+  as a function of richness is the rarefaction curve of phylogenetic diversity.
+  Both use exact formulas rather than randomization, accept several
+  phylogenies at once, and are the calculations behind
+  `calculate_pd_metric_rasters()`. They give the values `pd.query()` and
+  `pd.moments()` gave in the now-archived PhyloMeasures, under its uniform null
+  model.
+
+* `calculate_pd_metric_rasters()` gains `rarefy_to`, which adds a phylogenetic
+  diversity index free of its dependence on species richness. The usual index
+  guarantees only that randomly assembled cells score zero: under the same
+  degree of clustering, richer cells receive more extreme values (Sandel 2018),
+  which matters for any map across cells of differing richness. Sandel's remedy
+  is to rarefy every community to a common richness and average the index over
+  many random rarefactions. Here that average is computed exactly, with no
+  replication, as the expected diversity of a random subset of the cell's
+  species standardized against the null for the target richness. It agrees with
+  the average over every possible rarefaction to rounding error. The new layers
+  are `pdi_time_rarefied` and `pdi_traits_rarefied`; cells with fewer species
+  than the target are `NA`. In a reduced version of Sandel's simulation the
+  plain index shifted about four times as far across richness levels as the
+  rarefied one.
 
 * `blend_distances()` and `tune_blend_weight()` add the other route to combining
   trait and phylogenetic information: rather than rescaling branch lengths, they

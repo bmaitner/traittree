@@ -4,10 +4,6 @@
 # The R-hub workflow alongside this one stays manual: it covers the unusual
 # platforms (valgrind, gcc-san, older toolchains) that are worth a look before
 # a CRAN submission but not on every commit.
-#
-# PhyloMeasures was archived from CRAN, so it cannot be resolved from the
-# repositories.  DESCRIPTION carries a Remotes: entry pointing at the archived
-# source, which pak honours; it needs a compiler but no system libraries.
 
 on:
   push:

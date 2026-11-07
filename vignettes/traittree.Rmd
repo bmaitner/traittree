@@ -203,9 +203,72 @@ That last column is the part a single point estimate cannot show you: how much
 of the spatial pattern in trait-based diversity is real, and how much is an
 artifact of not knowing the ancestral states.
 
+### Comparing cells of different richness
+
+`pdi_time` and `pdi_traits` are standardized against species richness: PD is
+compared with what random draws of the same number of species would give. That
+makes randomly assembled cells score zero whatever their richness, but it does
+not make other values comparable. Under the same degree of phylogenetic
+clustering, a richer cell gets a more extreme index (Sandel 2018), so a map of
+PDI partly reflects a map of richness.
+
+`rarefy_to` adds an index without that dependence. Every cell is rarefied to a
+common number of species and compared with the null for that number. No random
+subsets are drawn: the average over every possible rarefaction is computed
+exactly.
+
+```{r rarefied}
+rarefied <- calculate_pd_metric_rasters(occurrences = example_occurrences,
+                                        phylogeny = example_tree,
+                                        traits = example_traits,
+                                        template.raster = template,
+                                        rarefy_to = 4)
+
+names(rarefied$pd_stack)
+```
+
+Cells with fewer species than the target are `NA` in the rarefied layers. The
+price is power: rarefaction discards information, more of it the lower the
+target, so choose the largest target that keeps the cells you need.
+`rarefy_to = "min"` keeps every cell with at least two species, at the cost of
+the least power.
+
 If you already have trait-scaled trees in hand, pass them directly with
-`trait_phylo` instead of having them rebuilt, and set `verbose = TRUE` to watch
-the loop over cells.
+`trait_phylo` instead of having them rebuilt.
+
+### Diversity without the map
+
+The rasters are a convenience. The calculation underneath is available on its
+own as `phylo_diversity()`, for any set of communities and any phylogeny,
+whether or not its branches have been rescaled:
+
+```{r phylo_diversity}
+diversity <- phylo_diversity(tree = example_tree,
+                             communities = example_occurrences,
+                             rarefy_to = 4)
+
+head(diversity)
+```
+
+Communities can be given as occurrences, as here, or as a matrix of communities
+by species. The null mean and standard deviation behind the index are exact,
+computed from the phylogeny rather than estimated by shuffling, so the index
+carries no sampling error and costs little. Given several trees that share a
+topology, such as a posterior sample from
+`scale_branches_multidimensional_with_variation()`, it measures them together
+and returns a matrix of communities by trees.
+
+`phylo_diversity_moments()` returns the null moments themselves. As a function
+of richness the mean is the rarefaction curve of phylogenetic diversity:
+
+```{r moments, fig.alt = "Expected phylogenetic diversity against species richness, with a band of two standard deviations"}
+moments <- phylo_diversity_moments(example_tree, richness = 1:60)
+
+plot(moments$richness, moments$mean, type = "l",
+     xlab = "species richness", ylab = "expected PD")
+lines(moments$richness, moments$mean + 2 * moments$sd, lty = 2)
+lines(moments$richness, moments$mean - 2 * moments$sd, lty = 2)
+```
 
 ## The other route: blending distances
 

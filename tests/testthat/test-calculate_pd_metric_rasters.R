@@ -1,6 +1,5 @@
-# The batched rewrite of calculate_pd_metric_rasters(), checked against the
-# original one-cell-at-a-time implementation in
-# helper-reference-implementations.R.
+# calculate_pd_metric_rasters(): the raster pipeline around the phylogenetic
+# diversity calculations, which have their own tests in test-phylo_diversity.R.
 
 # Build a small but non-trivial occurrence dataset over a template raster.
 simulate_occurrences <- function(n_tips = 40, n_cells = 60, n_records = 300, seed = 111){
@@ -17,47 +16,29 @@ simulate_occurrences <- function(n_tips = 40, n_cells = 60, n_records = 300, see
 
 }
 
-test_that("batched pd/pdi rasters match the original cell-by-cell implementation", {
+test_that("pd and pdi rasters reproduce the values PhyloMeasures gave", {
 
-  skip_on_cran()
-
-  fixture <- simulate_occurrences()
+  # Frozen output of the last version of this function that called
+  # pd.query() from PhyloMeasures; see dev/pdi_research/make_pd_fixtures.R. Supplying
+  # the trait-scaled trees keeps the comparison independent of the reconstruction.
+  reference <- readRDS(test_path("fixtures", "pd_reference.rds"))$pipeline
 
   template <- raster::raster(nrows = 10, ncols = 10)
 
-  batched <- suppressMessages(
-    calculate_pd_metric_rasters(occurrences = fixture$occurrences,
-                                phylogeny = fixture$tree,
-                                traits = fixture$traits,
-                                template.raster = template))
+  single <- calculate_pd_metric_rasters(occurrences = example_occurrences,
+                                        phylogeny = example_tree,
+                                        traits = NULL,
+                                        template.raster = template,
+                                        trait_phylo = reference$trait_tree)
 
-  reference <- suppressMessages(
-    reference_calculate_pd_metric_rasters(occurrences = fixture$occurrences,
-                                          phylogeny = fixture$tree,
-                                          traits = fixture$traits,
-                                          template.raster = template))
+  several <- calculate_pd_metric_rasters(occurrences = example_occurrences,
+                                         phylogeny = example_tree,
+                                         traits = NULL,
+                                         template.raster = template,
+                                         trait_phylo = reference$trait_sample)
 
-  expect_equal(names(batched), names(reference))
-  expect_equal(names(batched$pd_stack), names(reference$pd_stack))
-
-  for(layer in names(batched$pd_stack)){
-
-    expect_equal(raster::values(batched$pd_stack[[layer]]),
-                 raster::values(reference$pd_stack[[layer]]),
-                 tolerance = 1e-8,
-                 info = layer)
-
-  }
-
-  # The phylogenies returned alongside the rasters should be untouched by the
-  # change to how cells are queried.
-  for(component in c("time_phylo", "trait_phylo", "rate_phylo")){
-
-    expect_equal(batched[[component]]$tip.label, reference[[component]]$tip.label, info = component)
-    expect_equal(batched[[component]]$edge.length, reference[[component]]$edge.length,
-                 tolerance = 1e-8, info = component)
-
-  }
+  expect_equal(raster::values(single$pd_stack), reference$single, tolerance = 1e-9)
+  expect_equal(raster::values(several$pd_stack), reference$several, tolerance = 1e-9)
 
 })
 
@@ -256,6 +237,62 @@ test_that("an already scaled phylogeny can be supplied instead of traits", {
 
   expect_true("pd_traits_mean" %in% names(from_sample$pd_stack))
   expect_length(from_sample$trait_phylo, 12)
+
+})
+
+test_that("a compressed multiPhylo of trait trees is read correctly", {
+
+  skip_on_cran()
+
+  reference <- readRDS(test_path("fixtures", "pd_reference.rds"))$pipeline
+
+  template <- raster::raster(nrows = 10, ncols = 10)
+
+  compressed <- ape::.compressTipLabel(reference$trait_sample)
+
+  from_compressed <- calculate_pd_metric_rasters(occurrences = example_occurrences,
+                                                 phylogeny = example_tree,
+                                                 traits = NULL,
+                                                 template.raster = template,
+                                                 trait_phylo = compressed)
+
+  expect_equal(raster::values(from_compressed$pd_stack), reference$several, tolerance = 1e-9)
+
+})
+
+test_that("verbose keeps its position, so positional calls still reach it", {
+
+  skip_on_cran()
+
+  reference <- readRDS(test_path("fixtures", "pd_reference.rds"))$pipeline
+
+  template <- raster::raster(nrows = 10, ncols = 10)
+
+  # eighth positional argument: verbose, as it was before rarefy_to existed
+  expect_message(calculate_pd_metric_rasters(example_occurrences, example_tree, NULL, template,
+                                             reference$trait_tree, 1, c(0.025, 0.975), TRUE),
+                 "Computing phylogenetic diversity")
+
+})
+
+test_that("trait trees must share the time tree's species after pruning", {
+
+  skip_on_cran()
+
+  reference <- readRDS(test_path("fixtures", "pd_reference.rds"))$pipeline
+
+  template <- raster::raster(nrows = 10, ncols = 10)
+
+  # one of the supplied trait trees lacks five species the others have, so it
+  # would be measured against a different species pool
+  smaller <- ape::drop.tip(reference$trait_tree, reference$trait_tree$tip.label[1:5])
+
+  expect_error(calculate_pd_metric_rasters(occurrences = example_occurrences,
+                                           phylogeny = example_tree,
+                                           traits = NULL,
+                                           template.raster = template,
+                                           trait_phylo = list(reference$trait_tree, smaller)),
+               "must have the same tips")
 
 })
 

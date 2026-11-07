@@ -21,23 +21,7 @@ rasters).
 pak::pak("bmaitner/traittree")
 ```
 
-One dependency needs a note. `PhyloMeasures`, used for the phylogenetic
-diversity metrics, was archived from CRAN, so it cannot be installed from the
-repositories in the usual way. `DESCRIPTION` points at the archived source under
-`Remotes:`, which `pak` resolves automatically. It is compiled from source, so
-you will need the usual build tools (Rtools on Windows, Xcode command line tools
-on macOS).
-
-`remotes` reads that field differently and will not resolve it, so install the
-dependency first if you prefer `remotes`:
-
-```r
-# install.packages("remotes")
-remotes::install_url(
-  "https://cran.r-project.org/src/contrib/Archive/PhyloMeasures/PhyloMeasures_2.1.tar.gz"
-)
-remotes::install_github("bmaitner/traittree")
-```
+`remotes::install_github("bmaitner/traittree")` works equally well.
 
 ## What it does
 
@@ -89,6 +73,10 @@ names(result$pd_stack)
 | `data_matching()` | Prune a tree and an occurrence table to their shared species |
 | `richness_raster()` | Species richness per raster cell |
 | `calculate_pd_metric_rasters()` | PD and PDI rasters from time- and trait-scaled trees |
+| `phylo_diversity()` | PD and its standardized index (PDI) for any set of communities, with exact null moments and optional rarefaction |
+| `phylo_diversity_moments()` | The null mean and standard deviation of PD at a given richness |
+| `blend_distances()` | Mix phylogenetic and trait distances into one distance matrix |
+| `tune_blend_weight()` | Estimate the blending weight from the data |
 
 ## Two things worth knowing
 
