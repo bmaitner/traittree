@@ -387,6 +387,38 @@ test_that("a star tree reduces PD to species richness", {
                             n_communities = 3)
 
   expect_equal(result$pd[, 1], c(2, 5, 12))
-  expect_equal(result$pdi[, 1], c(0, 0, 0))
+
+  # The variance is zero in truth and rounding noise in practice, so the index
+  # is noise over noise: tiny, but not bit-exact zero.
+  expect_true(all(abs(result$pdi[, 1]) < 1e-6))
+
+})
+
+test_that("a genuinely tiny variance is kept rather than rounded away", {
+
+  # Four tips on a star, one branch longer by 2e-7: the null sd at richness 2
+  # is 1e-7, a few parts in 1e7 of the mean, which is at the edge of what the
+  # subtraction in the variance can resolve. It must survive, so that a pair
+  # of the short branches scores about -1 and not about zero.
+  star <- ape::stree(4, type = "star")
+  star$tip.label <- letters[1:4]
+  star$edge.length <- c(1, 1, 1, 1 + 2e-7)
+
+  null <- phylo_diversity_moments(star, 2)
+
+  expect_equal(null$mean, 2 + 1e-7, tolerance = 1e-12)
+  expect_gt(null$sd, 0.5e-7)
+  expect_lt(null$sd, 2e-7)
+
+  pair <- phylo_diversity(star, data.frame(species = c("a", "b"), community = 1))
+
+  expect_lt(pair$pdi, -0.5)
+  expect_gt(pair$pdi, -2)
+
+  # A negative value, which is pure rounding, never reaches the square root.
+  equal <- star
+  equal$edge.length <- rep(1, 4)
+
+  expect_false(anyNA(phylo_diversity_moments(equal, 0:4)$sd))
 
 })

@@ -262,8 +262,15 @@ pd_null_moments <- function(structure, sums, richness){
 
   variance <- second_moment - mean_pd^2
 
-  #The subtraction leaves rounding noise where the true variance is zero.
-  variance[variance < 1e-14 * mean_pd^2] <- 0
+  #The subtraction cannot resolve a variance smaller than the rounding error of
+  #the sums that produced it, which is a few units of machine precision times
+  #the second moment. Below that the result is noise of either sign, so it is
+  #set to zero rather than left negative or turned into a spurious spread.
+  #Anything larger is kept, however small: a null standard deviation of a
+  #few parts in 1e7 of the mean is the resolution limit, not a special case.
+  noise <- 8 * .Machine$double.eps * second_moment
+
+  variance[variance < noise] <- 0
 
   list(mean = mean_pd, sd = sqrt(variance))
 

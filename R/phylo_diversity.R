@@ -453,9 +453,15 @@ pd_check_trees <- function(tree){
 
     trees <- list(tree)
 
-  }else if(inherits(tree, "multiPhylo") || is.list(tree)){
+  }else if(inherits(tree, "multiPhylo")){
 
-    trees <- unclass(tree)
+    #A multiPhylo may keep one copy of the tip labels in an attribute rather
+    #than in each tree; put them back before treating it as a plain list.
+    trees <- unclass(ape::.uncompressTipLabel(tree))
+
+  }else if(is.list(tree)){
+
+    trees <- tree
 
   }else{
 

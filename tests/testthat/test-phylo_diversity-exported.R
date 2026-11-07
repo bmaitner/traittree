@@ -251,6 +251,35 @@ test_that("several phylogenies return matrices that match one at a time", {
 
 })
 
+test_that("a multiPhylo with its tip labels compressed into an attribute still works", {
+
+  # ape can store one copy of the labels on the multiPhylo instead of in each
+  # tree. Unclassing such an object leaves every tree without tips.
+  case <- reference$ultrametric
+
+  set.seed(64)
+
+  trees <- lapply(1:3, function(i){
+
+    tree_i <- case$tree
+    tree_i$edge.length <- stats::runif(nrow(tree_i$edge), 0, 2)
+    tree_i
+
+  })
+
+  class(trees) <- "multiPhylo"
+  compressed <- ape::.compressTipLabel(trees)
+
+  expect_null(unclass(compressed)[[1]]$tip.label)
+
+  expect_equal(phylo_diversity(compressed, case$communities),
+               phylo_diversity(trees, case$communities))
+
+  expect_equal(phylo_diversity_moments(compressed, c(2, 10, 30)),
+               phylo_diversity_moments(trees, c(2, 10, 30)))
+
+})
+
 test_that("species that are not in the phylogeny are ignored with a warning", {
 
   tree <- reference$ultrametric$tree

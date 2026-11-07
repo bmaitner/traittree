@@ -8,8 +8,8 @@
 #' @param trait_phylo Optional trait-scaled phylogeny, or a multiPhylo of them, to use instead of scaling the phylogeny internally. Defaults to NULL, meaning scale it here.
 #' @param n_trees Number of trait-scaled phylogenies to draw from the joint posterior of the ancestral states, so that uncertainty in the reconstruction is carried into the metrics. Defaults to 1, which uses the point estimate and reproduces the previous behaviour. Ignored when \code{trait_phylo} is supplied.
 #' @param probs The two quantiles summarising the trait-based metrics across trees. Defaults to the central 95 percent.
-#' @param rarefy_to Optional richness to rarefy every cell to before standardizing, which removes the dependence of the index on species richness (see Details). Either a whole number of at least 2, or \code{"min"} for the smallest richness among the reported cells with two or more species. Defaults to NULL, meaning no rarefied index is computed.
 #' @param verbose Logical. If TRUE, report what is being computed. Defaults to FALSE.
+#' @param rarefy_to Optional richness to rarefy every cell to before standardizing, which removes the dependence of the index on species richness (see Details). Either a whole number of at least 2, or \code{"min"} for the smallest richness among the reported cells with two or more species. Defaults to NULL, meaning no rarefied index is computed.
 #' @return A list with \code{pd_stack}, \code{time_phylo}, \code{trait_phylo} and \code{rate_phylo}. With a single trait-scaled phylogeny, \code{pd_stack} holds \code{pd_time}, \code{pdi_time}, \code{pd_traits} and \code{pdi_traits}. With several, the trait-based layers are replaced by their mean, standard deviation and the two requested quantiles across trees, and \code{trait_phylo} is the multiPhylo that produced them. With \code{rarefy_to}, the rarefied index is appended as \code{pdi_time_rarefied} and \code{pdi_traits_rarefied} (summarised across trees in the same way), and the richness used is returned as \code{rarefied_to}.
 #' @note The time-based metrics do not depend on the traits, so they are computed once and are unaffected by \code{n_trees}.
 #' @details Phylogenetic diversity (PD) is the total branch length of the minimal subtree connecting the species in a cell; the path from that subtree to the root is not included. The phylogenetic diversity index (PDI) standardizes it: the mean PD of every set of the same number of species drawn from the phylogeny is subtracted, and the result divided by the standard deviation across those sets (Sandel 2018). Both moments are computed exactly rather than by randomization (Nipperess and Matsen 2013), and the species pool is every species left in the phylogeny once those without occurrences are removed. Negative values indicate species more closely related than expected by chance. A cell holding a single species has PD and PDI of zero.
@@ -50,8 +50,8 @@ calculate_pd_metric_rasters<-function(occurrences,
                                       trait_phylo=NULL,
                                       n_trees=1,
                                       probs=c(0.025,0.975),
-                                      rarefy_to=NULL,
-                                      verbose=FALSE){
+                                      verbose=FALSE,
+                                      rarefy_to=NULL){
 
   if(!is.numeric(n_trees) || length(n_trees) != 1 || is.na(n_trees) || n_trees < 1){
 
@@ -96,7 +96,20 @@ calculate_pd_metric_rasters<-function(occurrences,
 
     }
 
-    supplied_trees<-if(inherits(trait_phylo,"phylo")) list(trait_phylo) else unclass(trait_phylo)
+    supplied_trees<-if(inherits(trait_phylo,"phylo")){
+
+      list(trait_phylo)
+
+    }else if(inherits(trait_phylo,"multiPhylo")){
+
+      #Shared tip labels may live in an attribute rather than in each tree.
+      unclass(ape::.uncompressTipLabel(trait_phylo))
+
+    }else{
+
+      trait_phylo
+
+    }
 
     if(!is.list(supplied_trees) || length(supplied_trees) == 0 ||
        !all(vapply(supplied_trees,inherits,logical(1),"phylo"))){
@@ -172,6 +185,11 @@ calculate_pd_metric_rasters<-function(occurrences,
                       })
 
   time_phylo<- data_matching(phylogeny = time_phylo,occurrences = occurrences)$phylogeny
+
+  #The tips are the species pool, and the pool defines the null, so every
+  #tree has to have the same ones once pruned. A supplied trait tree missing
+  #a species would otherwise be measured against a different null, silently.
+  pd_check_trees(c(list(time_phylo),trait_trees))
 
   if(!is.null(rate_phylo)){
 

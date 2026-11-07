@@ -240,6 +240,62 @@ test_that("an already scaled phylogeny can be supplied instead of traits", {
 
 })
 
+test_that("a compressed multiPhylo of trait trees is read correctly", {
+
+  skip_on_cran()
+
+  reference <- readRDS(test_path("fixtures", "pd_reference.rds"))$pipeline
+
+  template <- raster::raster(nrows = 10, ncols = 10)
+
+  compressed <- ape::.compressTipLabel(reference$trait_sample)
+
+  from_compressed <- calculate_pd_metric_rasters(occurrences = example_occurrences,
+                                                 phylogeny = example_tree,
+                                                 traits = NULL,
+                                                 template.raster = template,
+                                                 trait_phylo = compressed)
+
+  expect_equal(raster::values(from_compressed$pd_stack), reference$several, tolerance = 1e-9)
+
+})
+
+test_that("verbose keeps its position, so positional calls still reach it", {
+
+  skip_on_cran()
+
+  reference <- readRDS(test_path("fixtures", "pd_reference.rds"))$pipeline
+
+  template <- raster::raster(nrows = 10, ncols = 10)
+
+  # eighth positional argument: verbose, as it was before rarefy_to existed
+  expect_message(calculate_pd_metric_rasters(example_occurrences, example_tree, NULL, template,
+                                             reference$trait_tree, 1, c(0.025, 0.975), TRUE),
+                 "Computing phylogenetic diversity")
+
+})
+
+test_that("trait trees must share the time tree's species after pruning", {
+
+  skip_on_cran()
+
+  reference <- readRDS(test_path("fixtures", "pd_reference.rds"))$pipeline
+
+  template <- raster::raster(nrows = 10, ncols = 10)
+
+  # one of the supplied trait trees lacks five species the others have, so it
+  # would be measured against a different species pool
+  smaller <- ape::drop.tip(reference$trait_tree, reference$trait_tree$tip.label[1:5])
+
+  expect_error(calculate_pd_metric_rasters(occurrences = example_occurrences,
+                                           phylogeny = example_tree,
+                                           traits = NULL,
+                                           template.raster = template,
+                                           trait_phylo = list(reference$trait_tree, smaller)),
+               "must have the same tips")
+
+})
+
 test_that("conflicting or missing inputs are rejected", {
 
   fixture <- simulate_occurrences(n_tips = 15, n_cells = 15, n_records = 60)

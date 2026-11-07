@@ -12,8 +12,8 @@ calculate_pd_metric_rasters(
   trait_phylo = NULL,
   n_trees = 1,
   probs = c(0.025, 0.975),
-  rarefy_to = NULL,
-  verbose = FALSE
+  verbose = FALSE,
+  rarefy_to = NULL
 )
 }
 \arguments{
@@ -31,9 +31,9 @@ calculate_pd_metric_rasters(
 
 \item{probs}{The two quantiles summarising the trait-based metrics across trees. Defaults to the central 95 percent.}
 
-\item{rarefy_to}{Optional richness to rarefy every cell to before standardizing, which removes the dependence of the index on species richness (see Details). Either a whole number of at least 2, or \code{"min"} for the smallest richness among the reported cells with two or more species. Defaults to NULL, meaning no rarefied index is computed.}
-
 \item{verbose}{Logical. If TRUE, report what is being computed. Defaults to FALSE.}
+
+\item{rarefy_to}{Optional richness to rarefy every cell to before standardizing, which removes the dependence of the index on species richness (see Details). Either a whole number of at least 2, or \code{"min"} for the smallest richness among the reported cells with two or more species. Defaults to NULL, meaning no rarefied index is computed.}
 }
 \value{
 A list with \code{pd_stack}, \code{time_phylo}, \code{trait_phylo} and \code{rate_phylo}. With a single trait-scaled phylogeny, \code{pd_stack} holds \code{pd_time}, \code{pdi_time}, \code{pd_traits} and \code{pdi_traits}. With several, the trait-based layers are replaced by their mean, standard deviation and the two requested quantiles across trees, and \code{trait_phylo} is the multiPhylo that produced them. With \code{rarefy_to}, the rarefied index is appended as \code{pdi_time_rarefied} and \code{pdi_traits_rarefied} (summarised across trees in the same way), and the richness used is returned as \code{rarefied_to}.
