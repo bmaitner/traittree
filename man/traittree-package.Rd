@@ -8,6 +8,14 @@
 \description{
 Rescales the branches of a phylogeny from units of time to units of phenotypic change, using ancestral trait reconstruction. Uncertainty in the reconstruction can be carried through to downstream analyses by drawing trees from the joint posterior of the ancestral states. Also blends phylogenetic and trait distances following Cadotte, Albert and Walker (2013) \doi{10.1111/ele.12161}, and maps phylogenetic diversity and its standardized index, with exact null moments from Nipperess and Matsen (2013) \doi{10.1111/2041-210X.12042} and the rarefaction of Sandel (2018) \doi{10.1111/ecog.02967}.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/bmaitner/traittree}
+  \item Report bugs at \url{https://github.com/bmaitner/traittree/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Brian Maitner \email{bmaitner@gmail.com}
 
