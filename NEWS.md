@@ -1,4 +1,4 @@
-# traittree 0.0.0.9000
+# traittree 0.1.0
 
 ## Breaking changes
 

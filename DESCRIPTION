@@ -1,6 +1,6 @@
 Package: traittree
 Title: Scale Phylogenies by Phenotypic Change
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R: person("Brian", "Maitner", email = "bmaitner@gmail.com", role = c("aut", "cre"))
 Description: Rescales the branches of a phylogeny from units of time to units
     of phenotypic change, using ancestral trait reconstruction. Uncertainty in
