@@ -5,15 +5,17 @@ This is a new submission.
 ## Test environments
 
 * Local: Windows 11, R 4.4.1
-* win-builder: Windows, R-devel
+* win-builder: Windows Server 2022, R-devel, R 4.6.2 and R 4.5.3
 * GitHub Actions:
   * macOS (aarch64), R 4.6.2
   * Windows Server, R 4.6.2
   * Ubuntu, R-devel, R 4.6.2 and R 4.5.3
 * R-hub:
-  * Linux, macOS and Windows, R-devel (2026-11-05 r90840)
+  * Linux, macOS and Windows, R-devel
   * Ubuntu, R 4.6.2 patched
   * Linux, R-devel, with `--run-donttest`
+  * Linux, R-devel, with ATLAS and with MKL as the BLAS/LAPACK
+  * Linux, R-devel, without long double
 
 ## R CMD check results
 
@@ -22,16 +24,6 @@ This is a new submission.
 * checking CRAN incoming feasibility ... NOTE
 
   New submission
-
-  Possibly misspelled words in DESCRIPTION:
-    Cadotte (9:48)
-    Matsen (11:68)
-    Nipperess (11:54)
-    Phylogenies (2:14)
-    Sandel (12:65)
-
-  These are spelled correctly. "Phylogenies" is the plural of "phylogeny";
-  the others are the surnames of the authors of the cited references.
 
 ## Reverse dependencies
 
