@@ -58,6 +58,7 @@ devtools::check_win_devel()
 devtools::check_win_release()
 devtools::check_win_oldrelease()
 devtools::check_mac_release()
+devtools::check_mac_devel()
 
 # win-builder also runs the spell check of DESCRIPTION, which a Windows machine
 # without aspell skips. The surnames and "Phylogenies" it would flag are in
