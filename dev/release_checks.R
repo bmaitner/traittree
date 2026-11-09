@@ -7,8 +7,8 @@
 # spelling checks, tarball size, and the remote CRAN-like builders.
 
 # 1. Bookkeeping ------------------------------------------------------------
-# Bump Version in DESCRIPTION and add a NEWS.md entry. There is no
-# cran-comments.md yet; usethis::use_cran_comments() creates one.
+# Bump Version in DESCRIPTION and add a NEWS.md entry, then bring
+# cran-comments.md up to date with the results of the checks below.
 # usethis::use_version("minor")        # or "patch" / "major"
 # usethis::use_release_issue()         # tickable checklist as a GitHub issue
 
@@ -49,15 +49,40 @@ stopifnot(file.size(tb) < 4 * 1024^2)
 # devtools::build_vignettes(); browseURL("doc/traittree.html")
 
 # 4. Remote builders (results arrive by email / GitHub) ---------------------
-devtools::check_win_devel()            # CRAN's Windows R-devel builder
+# These cover what the GitHub Actions matrix cannot: CRAN's own machines, and
+# builds whose arithmetic differs. Everything here checks what is on GitHub or
+# in the working tree, so commit and push first.
+
+# CRAN's Windows machines, on all three R versions, and its macOS builder.
+devtools::check_win_devel()
+devtools::check_win_release()
+devtools::check_win_oldrelease()
+devtools::check_mac_release()
+
+# win-builder also runs the spell check of DESCRIPTION, which a Windows machine
+# without aspell skips. The surnames and "Phylogenies" it would flag are in
+# .aspell/traittree.rds (see .aspell/defaults.R for how to change the list).
 
 # R-hub v2 runs in this repo's GitHub Actions (.github/workflows/rhub.yaml,
 # created once with rhub::rhub_setup()). The workflow file must be on the
-# default branch, so commit and push before checking. Results appear under
+# default branch. Results appear under
 # https://github.com/bmaitner/traittree/actions.
+#
+# Beyond the three operating systems on R-devel, the platforms are chosen for
+# numerics, because the tests compare against frozen values at tight tolerances
+# and run an optimizer (Rphylopars): atlas and mkl swap the linear algebra
+# library, nold has no long doubles. CRAN checks on all three. The memory
+# checkers (clang-asan, valgrind, rchk) are left out: there is no compiled code.
+#
+# The Fedora containers (atlas, mkl, nold, nosuggests) can fail before the
+# package is built, when a prebuilt dependency does not match the container's
+# R: in November 2026 nosuggests died loading ape ("libRlapack.so: cannot open
+# shared object file"). That says nothing about the package; a failure only
+# counts if the log gets as far as "checking for file 'traittree/DESCRIPTION'".
 rhub::rhub_doctor()
 rhub::rhub_check(platforms = c("linux", "macos", "windows",
-                               "ubuntu-next", "nosuggests", "donttest"))
+                               "ubuntu-next", "donttest",
+                               "atlas", "mkl", "nold"))
 # rhub::rhub_platforms()               # the full list of available builders
 
 # 5. Submit -----------------------------------------------------------------
